@@ -1,0 +1,19 @@
+{
+    "name": "javok/kiv-web",
+    "description": "Semestral project.",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Core\\": "core/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Vokymir",
+            "email": "22869857+vokymir@users.noreply.github.com"
+        }
+    ],
+    "require": {}
+}
