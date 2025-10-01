@@ -1,1 +1,1 @@
-ahoj
+this is index.php
