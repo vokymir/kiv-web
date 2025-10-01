@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use app\core as core;
+use App\Core\Database;
 use DateTime;
 
 enum Status: int
@@ -25,7 +25,7 @@ class Post
 
 	public function add(int $userId, string $title, string $abstract, string $pathPDF): void
 	{
-		$db = new core\Database();
+		$db = new Database();
 		$db->query("INSERT INTO post (userId, title, abstract, pathPDF) VALUES (:userId, :title, :abstract, :pathPDF)")
 			->bind(':userId', $userId)
 			->bind(':title', $title)
