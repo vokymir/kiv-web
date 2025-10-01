@@ -54,13 +54,14 @@ class Router
 	/*
 	*
 	*/
-	public function match($urlParts): array|null
+	public function match(array $urlParts): ?array
 	{
-		$route = null;
-		if (isset($urlParts[1])) {
-			$route = $urlParts[0] . '/' . $urlParts[1];
-		} elseif (isset($urlParts[0])) {
-			$route = $urlParts[0];
+		// normalize route: join all parts (except empty ones)
+		$route = implode('/', array_filter($urlParts));
+
+		// handle root ("/")
+		if ($route === '') {
+			$route = '';
 		}
 
 		$httpMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -70,7 +71,8 @@ class Router
 			return [
 				'controller' => $routeInfo['controller'],
 				'method' => $routeInfo['method'],
-				'params' => array_slice($urlParts, 2)
+				// everything after matched route is params
+				'params' => array_slice($urlParts, count(explode('/', $route)))
 			];
 		}
 
