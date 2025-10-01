@@ -2,12 +2,16 @@
 
 namespace App\Controllers;
 
-use App\Core\View;
+use App\Core;
 
-class PublicController
+class PublicController extends Core\Controller
 {
 	public function index(): void
 	{
-		View::render("public/index");
+		$data = [
+			"title" => "homepage",
+		];
+
+		$this::renderView("public/index", $data);
 	}
 }

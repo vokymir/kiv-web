@@ -1,11 +1,5 @@
-<?php
-
-namespace App\Views;
-
-?>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+<footer class="bg-dark text-white py-3 mt-auto">
+	<div class="container text-center">
+		<small>&copy; <?= date("Y") ?> <?= htmlspecialchars($sitename) ?>. All rights reserved.</small>
+	</div>
+</footer>
