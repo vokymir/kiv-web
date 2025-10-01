@@ -11,7 +11,8 @@ session_start();
 $router = new Router();
 $dispatcher = new Dispatcher();
 
-require_once __DIR__ . '/../app/routes.php';
+$loadRoutes = require __DIR__ . '/../App/Routes.php';
+$loadRoutes($router);
 
 $app = new App($router, $dispatcher);
 $app->run();
