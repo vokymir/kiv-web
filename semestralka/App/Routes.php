@@ -10,4 +10,6 @@ return function (Router $router) {
 	$router->post('register', 'AuthController@register');
 	$router->get('logout', 'AuthController@logout');
 	$router->get('program', 'PublicController@program');
+	$router->get('posts', 'PostController@posts');
+	$router->get('posts/new', 'PostController@new');
 };

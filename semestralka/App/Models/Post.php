@@ -27,4 +27,14 @@ class Post
 			->bind(':pathPDF', $pathPDF)
 			->execute();
 	}
+
+	public function isStatus(Status $status): bool
+	{
+		return $this->status->value === $status->value;
+	}
+
+	public function canEdit(): bool
+	{
+		return ! $this->isStatus(Status::Accepted);
+	}
 }
