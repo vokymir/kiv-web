@@ -33,17 +33,19 @@ class AuthController extends Controller
 
 		if ($user && password_verify($password, $user['passwordHash'])) {
 			Auth::login($user);
-			header('Location: ' . Config::BASE_URL); // HERE
+			header('Location: ' . Config::BASE_URL);
 			exit;
 		} else {
-			echo 'Invalid credentials...'; // HERE show correct view for this
+			$error = 'Invalid credentials...';
+			self::renderView('public/login', ['error' => $error]);
+			return;
 		}
 	}
 
 	public function logout(): void
 	{
 		Auth::logout();
-		header('Location: ' . Config::BASE_URL); // HERE
+		header('Location: ' . Config::BASE_URL . 'login');
 		exit;
 	}
 
@@ -51,20 +53,29 @@ class AuthController extends Controller
 	{
 		$username = trim($_POST['username'] ?? '');
 		$password = $_POST['password'] ?? '';
+		$confirmPassword = $_POST['confirm_password'] ?? '';
 		$role = Role::Author;
 
-		if ($username === '' || $password === '') {
-			echo 'Please fill all fields...'; // HERE also
+		if ($username === '' || $password === '' || $confirmPassword === '') {
+			$error = 'Please fill all fields...';
+			self::renderView('public/register', ['error' => $error]);
+			return;
+		}
+
+		if ($password !== $confirmPassword) {
+			$error = 'You must have the same password.';
+			self::renderView('public/register', ['error' => $error]);
 			return;
 		}
 
 		$db = new Database();
 		$u = $db
-			->query('SELECT id FROM users WHERE username = un VALUES (:un) ')
+			->query('SELECT id FROM users WHERE username = :un')
 			->bind(':un', $username)
 			->fetchFirst();
 		if ($u) {
-			echo 'Username exists...'; // HERE
+			$error = 'Username exists...';
+			self::renderView('public/register', ['error' => $error]);
 			return;
 		}
 
@@ -76,7 +87,7 @@ class AuthController extends Controller
 			->bind(':role', $role->value)
 			->execute();
 
-		header('Location: ' . Config::BASE_URL) . 'login'; // HERE
+		header('Location: ' . Config::BASE_URL . 'login');
 		exit;
 	}
 }

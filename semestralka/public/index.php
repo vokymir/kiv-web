@@ -8,6 +8,12 @@ require __DIR__ . '/../vendor/autoload.php';
 
 session_start();
 
+// === DEBUG ===
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// === ===== ===
+
 $router = new Router();
 $dispatcher = new Dispatcher();
 
