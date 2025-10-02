@@ -3,14 +3,8 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Models\Status;
 use DateTime;
-
-enum Status: int
-{
-	case PendingReview = 10;
-	case Accepted = 20;
-	case Rejected = 30;
-}
 
 class Post
 {
