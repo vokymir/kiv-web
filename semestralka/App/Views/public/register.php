@@ -8,7 +8,7 @@ use App\Config\Config;
 	<div class="col-md-6 col-lg-4">
 		<div class="card shadow-sm">
 			<div class="card-body">
-				<h3 class="card-title text-center mb-4">Login</h3>
+				<h3 class="card-title text-center mb-4">Register</h3>
 
 				<?php if (!empty($error)): ?>
 					<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -20,6 +20,11 @@ use App\Config\Config;
 						<input type="text" class="form-control" id="username" name="username" required>
 					</div>
 
+					<div class="mb-3">
+						<label for="email" class="form-label">Email</label>
+						<input type="email" class="form-control" id="email" name="email" required>
+					</div>
+
 					<div class="mb-3 position-relative">
 						<label for="password" class="form-label">Password</label>
 						<input type="password" class="form-control" id="password" name="password" required>
@@ -27,12 +32,19 @@ use App\Config\Config;
 							onclick="togglePassword('password', this)">Show</button>
 					</div>
 
+					<div class="mb-3 position-relative">
+						<label for="confirm_password" class="form-label">Confirm Password</label>
+						<input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+						<button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 me-2"
+							onclick="togglePassword('confirm_password', this)">Show</button>
+					</div>
+
 					<div class="d-grid mb-3">
-						<button type="submit" class="btn btn-primary">Login</button>
+						<button type="submit" class="btn btn-success">Register</button>
 					</div>
 
 					<div class="text-center">
-						<a href="<?= Config::BASE_URL ?>register">Don't have an account? Register</a>
+						<a href="<?= Config::BASE_URL ?>login">Already have an account? Login</a>
 					</div>
 				</form>
 			</div>
