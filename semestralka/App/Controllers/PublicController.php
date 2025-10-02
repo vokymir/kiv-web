@@ -12,6 +12,6 @@ class PublicController extends Core\Controller
 			"title" => "homepage",
 		];
 
-		$this::renderView("public/index", $data);
+		$this::renderView("public/home", $data);
 	}
 }
