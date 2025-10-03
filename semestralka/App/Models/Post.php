@@ -211,4 +211,9 @@ ORDER BY p.created_at DESC
 
 		return $result['pathPDF'] ?? '';
 	}
+
+	public function rating(): int
+	{
+		return rand(1, 5); // TODO
+	}
 }

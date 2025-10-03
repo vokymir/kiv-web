@@ -53,10 +53,11 @@ class AuthController extends Controller
 	{
 		$username = trim($_POST['username'] ?? '');
 		$password = $_POST['password'] ?? '';
+		$name = $_POST['name'] ?? '';
 		$confirmPassword = $_POST['confirm_password'] ?? '';
 		$role = Role::Author;
 
-		if ($username === '' || $password === '' || $confirmPassword === '') {
+		if ($username === '' || $password === '' || $confirmPassword === '' || $name === '') {
 			$error = 'Please fill all fields...';
 			self::renderView('public/register', ['error' => $error]);
 			return;
@@ -81,10 +82,11 @@ class AuthController extends Controller
 
 		$hash = password_hash($password, PASSWORD_BCRYPT);
 		$db
-			->query('INSERT INTO users (username, passwordHash, role) VALUES (:username, :passwordHash, :role)')
+			->query('INSERT INTO users (username, passwordHash, role, name) VALUES (:username, :passwordHash, :role, :name)')
 			->bind(':username', $username)
 			->bind(':passwordHash', $hash)
 			->bind(':role', $role->value)
+			->bind(':name', $name)
 			->execute();
 
 		header('Location: ' . Config::BASE_URL . 'login');

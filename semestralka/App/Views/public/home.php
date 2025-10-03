@@ -1,25 +1,7 @@
 <?php
 
 use App\Config\Config;
-use App\Core\Database;
-use App\Models\Status;
 
-$db = new Database();
-
-// Pull random 3 authors of accepted posts
-$speakers = $db->query("
-    SELECT u.id, u.username 
-    FROM posts p
-    JOIN users u ON p.userId = u.id
-    WHERE p.status = :accepted
-    GROUP BY u.id, u.username
-    ORDER BY RAND()
-    LIMIT 3
-")
-	->bind(':accepted', Status::Accepted->value)
-	->fetchAll();
-
-$isLoggedIn = !empty($_SESSION['user']);
 ?>
 
 <!-- Hero Section -->
@@ -45,12 +27,16 @@ $isLoggedIn = !empty($_SESSION['user']);
 			<?php if ($speakers): ?>
 				<?php foreach ($speakers as $speaker): ?>
 					<div class="col-md-4 text-center">
-						<img src="<?= Config::BASE_URL ?>images/avatar-placeholder.png"
-							alt="<?= htmlspecialchars($speaker['username']) ?>"
-							class="rounded-circle mb-3"
-							width="150" height="150">
-						<h5 class="fw-bold"><?= htmlspecialchars($speaker['username']) ?></h5>
-						<p class="text-muted">Author of accepted paper</p>
+						<p class="text-muted"><?= htmlspecialchars($speaker['name']) ?></p>
+						<h5 class="fw-bold"><?= htmlspecialchars($speaker['title']) ?></h5>
+						<div class="text-warning fs-5">
+							<?php
+							$filled = (int)floor($speaker['rating']);
+							$empty = 5 - $filled;
+							echo str_repeat('★', $filled);
+							echo str_repeat('☆', $empty);
+							?>
+						</div>
 					</div>
 				<?php endforeach; ?>
 			<?php else: ?>

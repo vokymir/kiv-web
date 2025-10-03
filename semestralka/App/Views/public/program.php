@@ -6,7 +6,7 @@ use App\Core\Database;
 // Fetch accepted posts with author info
 $db = new Database();
 $posts = $db->query("
-    SELECT p.id, p.title, p.abstract, p.pathPDF, u.username AS author
+    SELECT p.id, p.title, p.abstract, p.pathPDF, u.name AS author
     FROM posts p
     LEFT JOIN users u ON p.userId = u.id
     WHERE p.status = 20
@@ -22,7 +22,7 @@ $posts = $db->query("
 			<div class="accordion-item">
 				<h2 class="accordion-header" id="heading<?= $post['id'] ?>">
 					<button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $post['id'] ?>" aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>" aria-controls="collapse<?= $post['id'] ?>">
-						<?= htmlspecialchars($post['title']) ?> - <span class="text-muted"><?= htmlspecialchars($post['author'] ?? 'Unknown') ?></span>
+						<span class="text-muted"><?= htmlspecialchars($post['author'] ?? 'Anonymous') ?>:&nbsp </span> <?= htmlspecialchars($post['title']) ?>
 					</button>
 				</h2>
 				<div id="collapse<?= $post['id'] ?>" class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>" aria-labelledby="heading<?= $post['id'] ?>" data-bs-parent="#programAccordion">

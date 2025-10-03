@@ -21,6 +21,7 @@ class Auth
 		$_SESSION['user'] = [
 			'id' => $user['id'],
 			'username' => $user['username'],
+			'name' => $user['name'],
 			'role' => $user['role']
 		];
 	}

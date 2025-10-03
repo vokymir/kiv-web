@@ -20,6 +20,11 @@ use App\Config\Config;
 						<input type="text" class="form-control" id="username" name="username" required>
 					</div>
 
+					<div class="mb-3">
+						<label for="name" class="form-label">Public name</label>
+						<input type="text" class="form-control" id="name" name="name" required>
+					</div>
+
 					<div class="mb-3 position-relative">
 						<label for="password" class="form-label">Password</label>
 						<input type="password" class="form-control" id="password" name="password" required>
