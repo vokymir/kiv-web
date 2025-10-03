@@ -108,7 +108,7 @@ class Post
 
 	public function canEdit(): bool
 	{
-		return ! $this->isStatus(Status::Accepted);
+		return $this->isStatus(Status::Reworking);
 	}
 
 	public function getStatusName(): string
