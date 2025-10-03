@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Config\Config;
 use DateTime;
 
 class Post
@@ -33,15 +34,69 @@ class Post
 		}
 	}
 
-	public function add(int $userId, string $title, string $abstract, string $pathPDF, Status $status): void
+	public function create(array $data, array $file = []): bool
+	{
+		if (empty($data['title']) || empty($data['abstract'])) {
+			throw new \InvalidArgumentException("Title and abstract are required.");
+		}
+
+		// Handle optional PDF upload
+		$filename = '';
+		if (!empty($file['tmp_name'])) {
+			$filename = $this->uploadPdf($file);
+		}
+
+		// Insert into database 
+		$db = new Database();
+
+		return $db->query("
+        INSERT INTO posts (userId, title, abstract, pathPDF, status)
+        VALUES (:userId, :title, :abstract, :pathPDF, :status)
+    ")
+			->bind(':userId', $data['userId'])
+			->bind(':title', $data['title'])
+			->bind(':abstract', $data['abstract'])
+			->bind(':pathPDF', $filename)
+			->bind(':status', $data['status']->value)
+			->execute();
+	}
+
+	private function uploadPdf(array $file): string
+	{
+		$uploadDir = Config::UPLOAD_DIR;
+
+		if (!is_dir($uploadDir)) {
+			mkdir($uploadDir, 0777, true);
+		}
+
+		// Validate MIME type
+		$fileType = mime_content_type($file['tmp_name']);
+		if ($fileType !== 'application/pdf') {
+			throw new \InvalidArgumentException("Only PDF files are allowed.");
+		}
+
+		// Sanitize and generate filename
+		$originalName = pathinfo($file['name'], PATHINFO_FILENAME);
+		$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
+		$filename = time() . '_' . $safeName . '.pdf';
+		$target = $uploadDir . $filename;
+
+		if (!move_uploaded_file($file['tmp_name'], $target)) {
+			throw new \RuntimeException("Failed to upload PDF file.");
+		}
+
+		return $filename;
+	}
+
+	public function add(int $userId, string $title, string $abstract, string $filename, Status $status): bool
 	{
 		$db = new Database();
-		$db->query("INSERT INTO posts (userId, title, abstract, pathPDF, status)
+		return $db->query("INSERT INTO posts (userId, title, abstract, pathPDF, status)
 				VALUES (:userId, :title, :abstract, :pathPDF, :status)")
 			->bind(':userId', $userId)
 			->bind(':title', $title)
 			->bind(':abstract', $abstract)
-			->bind(':pathPDF', $pathPDF)
+			->bind(':pathPDF', $filename)
 			->bind(':status', $status->value)
 			->execute();
 	}
@@ -95,5 +150,65 @@ ORDER BY p.created_at DESC
 			->bind(':userId', $userId)->fetchAll();
 
 		return array_map(fn($row) => new self($row), $rows);
+	}
+
+	public function update(int $postId, array $data, array $file = []): bool
+	{
+		if (empty($data['title']) || empty($data['abstract'])) {
+			throw new \InvalidArgumentException("Title and abstract are required.");
+		}
+
+		// Keep existing PDF filename unless a new file is uploaded
+		$pdfFilename = $this->getPdfFilename($postId);
+		if (!empty($file['tmp_name'])) {
+			$pdfFilename = $this->uploadPdf($file);
+		}
+
+		$db = new Database();
+
+		return $db->query("
+        UPDATE posts
+        SET title = :title,
+            abstract = :abstract,
+            pathPDF = :pathPDF,
+            status = :status
+        WHERE id = :id
+    ")
+			->bind(':title', $data['title'])
+			->bind(':abstract', $data['abstract'])
+			->bind(':pathPDF', $pdfFilename)
+			->bind(':status', $data['status'])
+			->bind(':id', $postId)
+			->execute();
+	}
+
+	public function delete(int $postId): bool
+	{
+		// Remove PDF file if it exists
+		$filename = $this->getPdfFilename($postId);
+		if ($filename) {
+			$filePath = Config::UPLOAD_DIR . $filename;
+			if (file_exists($filePath)) {
+				unlink($filePath);
+			}
+		}
+
+		$db = new Database();
+
+		return $db->query("DELETE FROM posts WHERE id = :id")
+			->bind(':id', $postId)
+			->execute();
+	}
+
+	private function getPdfFilename(int $postId): string
+	{
+		$db = new Database();
+
+		$result = $db
+			->query("SELECT pathPDF FROM posts WHERE id = :id")
+			->bind(':id', $postId)
+			->fetchFirst();
+
+		return $result['pathPDF'] ?? '';
 	}
 }

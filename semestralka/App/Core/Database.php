@@ -6,6 +6,7 @@ use PDO;
 use PDOException;
 use PDOStatement;
 use App\Config\Config;
+use App\Models\Status;
 
 class Database
 {
@@ -71,6 +72,10 @@ class Database
                     break;
                 case is_null($value):
                     $type = PDO::PARAM_NULL;
+                    break;
+                case $value instanceof Status:
+                    $value = $value->value;
+                    $type = PDO::PARAM_INT;
                     break;
                 default:
                     $type = PDO::PARAM_STR;

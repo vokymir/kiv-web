@@ -11,7 +11,11 @@ class PostController extends Controller
 {
 	public function posts(): void
 	{
-		self::renderView('author/posts');
+
+		$userId = $_SESSION['user']['id'];
+		$posts = Post::findByUser($userId);
+
+		self::renderView('author/posts', ['posts' => $posts]);
 	}
 
 	public function new(): void
@@ -19,64 +23,80 @@ class PostController extends Controller
 		self::renderView('author/new');
 	}
 
-	public function storeNew(): void
+	public function edit(int $postId): void
 	{
-		$title = trim($_POST['title'] ?? '');
-		$abstract = trim($_POST['abstract'] ?? '');
-		$userId = $_SESSION['user']['id'] ?? null;
-		$status = Status::PendingReview;
+		$post = new Post();
+		$existing = $post->find($postId);
 
+		if (!$existing) {
+			http_response_code(404);
+			echo "Post not found";
+			return;
+		}
+
+		self::renderView('author/edit', ['post' => $existing]);
+	}
+
+	public function update(int $postId): void
+	{
+		$userId = $_SESSION['user']['id'] ?? null;
 		if (!$userId) {
 			header('Location: ' . Config::BASE_URL . 'login');
 			exit;
 		}
 
-		// check required fields
-		if (empty($title) || empty($abstract)) {
-			$error = "Title and abstract are required.";
-			self::renderView('author/new', ['error' => $error]);
-			return;
+		$post = new Post();
+		try {
+			$post->update($postId, [
+				'title' => trim($_POST['title'] ?? ''),
+				'abstract' => trim($_POST['abstract'] ?? ''),
+				'status' => $_POST['status'] ?? Status::PendingReview
+			], $_FILES['pdf'] ?? []);
+
+			header('Location: ' . Config::BASE_URL . 'posts');
+			exit;
+		} catch (\Exception $e) {
+			self::renderView('author/edit', [
+				'error' => $e->getMessage(),
+				'post' => $post->find($postId)
+			]);
 		}
+	}
 
-		$pdfPath = '';
-		$filename = '';
+	public function delete(int $postId): void
+	{
+		$post = new Post();
+		try {
+			$post->delete($postId);
+			header('Location: ' . Config::BASE_URL . 'posts');
+			exit;
+		} catch (\Exception $e) {
+			http_response_code(500);
+			echo "Failed to delete post: " . $e->getMessage();
+		}
+	}
 
-		if (!empty($_FILES['pdf']['tmp_name'])) {
-			$uploadDir = Config::UPLOAD_DIR;
-
-			if (!is_dir($uploadDir)) {
-				mkdir($uploadDir, 0777, true);
-			}
-
-			// validate file type
-			$fileType = mime_content_type($_FILES['pdf']['tmp_name']);
-			if ($fileType !== 'application/pdf') {
-				$error = "Only PDF files are allowed.";
-				self::renderView('author/new', ['error' => $error]);
-				return;
-			}
-
-			// sanitize filename
-			$originalName = pathinfo($_FILES['pdf']['name'], PATHINFO_FILENAME);
-			$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
-			$filename = time() . '_' . $safeName . '.pdf';
-
-			$target = $uploadDir . $filename;
-
-			if (move_uploaded_file($_FILES['pdf']['tmp_name'], $target)) {
-				// store relative path
-				$pdfPath = 'uploads/' . $filename;
-			} else {
-				$error = "Failed to upload PDF file.";
-				self::renderView('author/new', ['error' => $error]);
-				return;
-			}
+	public function storeNew(): void
+	{
+		$userId = $_SESSION['user']['id'] ?? null;
+		if (!$userId) {
+			header('Location: ' . Config::BASE_URL . 'login');
+			exit;
 		}
 
 		$post = new Post();
-		$post->add($userId, $title, $abstract, $filename, $status);
+		try {
+			$post->create([
+				'userId' => $userId,
+				'title' => trim($_POST['title'] ?? ''),
+				'abstract' => trim($_POST['abstract'] ?? ''),
+				'status' => Status::PendingReview
+			], $_FILES['pdf'] ?? []);
 
-		header('Location: ' . Config::BASE_URL . 'posts');
-		exit;
+			header('Location: ' . Config::BASE_URL . 'posts');
+			exit;
+		} catch (\Exception $e) {
+			self::renderView('author/new', ['error' => $e->getMessage()]);
+		}
 	}
 }

@@ -1,13 +1,6 @@
 <?php
 
 use App\Config\Config;
-use App\Models\Post;
-
-// Current user ID
-$userId = $_SESSION['user']['id'];
-
-// Fetch posts as objects
-$posts = Post::findByUser($userId);
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -41,6 +34,10 @@ $posts = Post::findByUser($userId);
 
 						<?php if ($post->canEdit()): ?>
 							<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/edit" class="btn btn-warning">Edit</a>
+						<?php endif; ?>
+
+						<?php if ($post->canEdit()): ?>
+							<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete" class="btn btn-danger">Delete</a>
 						<?php endif; ?>
 					</div>
 				</div>

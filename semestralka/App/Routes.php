@@ -14,4 +14,7 @@ return function (Router $router) {
 	$router->get('posts/new', 'PostController@new');
 	$router->post('posts/new', 'PostController@storeNew');
 	$router->get('download/pdf/{filename}', 'DownloadController@pdf');
+	$router->get('posts/{postId}/edit', 'PostController@edit');
+	$router->post('posts/update/{postId}', 'PostController@update');
+	$router->get('posts/{postId}/delete', 'PostController@delete');
 };
