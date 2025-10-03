@@ -56,24 +56,25 @@ class Router
 	*/
 	public function match(array $urlParts): ?array
 	{
-		// normalize route: join all parts (except empty ones)
-		$route = implode('/', array_filter($urlParts));
-
-		// handle root ("/")
-		if ($route === '') {
-			$route = '';
-		}
-
+		$routeStr = implode('/', array_filter($urlParts));
 		$httpMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-		if (isset($this->routes[$route][$httpMethod])) {
-			$routeInfo = $this->routes[$route][$httpMethod];
-			return [
-				'controller' => $routeInfo['controller'],
-				'method' => $routeInfo['method'],
-				// everything after matched route is params
-				'params' => array_slice($urlParts, count(explode('/', $route)))
-			];
+		foreach ($this->routes as $route => $methods) {
+			if (!isset($methods[$httpMethod])) continue;
+
+			// convert {param} to regex
+			$pattern = preg_replace('#\{[^/]+\}#', '([^/]+)', $route);
+			$pattern = "#^$pattern$#";
+
+			if (preg_match($pattern, $routeStr, $matches)) {
+				array_shift($matches); // remove full match
+				$routeInfo = $methods[$httpMethod];
+				return [
+					'controller' => $routeInfo['controller'],
+					'method' => $routeInfo['method'],
+					'params' => $matches
+				];
+			}
 		}
 
 		return null;
