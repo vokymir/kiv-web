@@ -111,7 +111,7 @@ class Post
 
 	public function canEdit(): bool
 	{
-		return $this->isStatus(Status::Reworking);
+		return $this->isStatus(Status::PendingReview);
 	}
 
 	public function getStatusName(): string
@@ -217,7 +217,29 @@ ORDER BY p.created_at DESC
 
 	public function rating(): int
 	{
-		return rand(1, 5); // TODO
+		$db = new \App\Core\Database();
+
+		// Fetch all reviews for this post
+		$rows = $db->query("
+        SELECT ratingInteresting, ratingImportant, ratingInovative
+        FROM reviews
+        WHERE postId = :postId
+    ")
+			->bind(':postId', $this->id)
+			->fetchAll();
+
+		if (!$rows) {
+			return 0; // no reviews yet
+		}
+
+		$sum = 0;
+		$count = count($rows);
+
+		foreach ($rows as $review) {
+			$sum += ($review['ratingInteresting'] + $review['ratingImportant'] + $review['ratingInovative']) / 3;
+		}
+
+		return (int)round($sum / $count);
 	}
 
 
@@ -233,7 +255,7 @@ ORDER BY p.created_at DESC
 		FROM posts p
 		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :userId
 		LEFT JOIN users u ON p.userId = u.id
-		WHERE p.status < 100   -- exclude already published posts, adjust as needed
+		WHERE p.status = 10   -- include only drafts
 		ORDER BY p.created_at DESC
 	")
 			->bind(':userId', $userId)
