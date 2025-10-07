@@ -48,20 +48,41 @@ use App\Config\Config;
 							<ul class="list-group mb-3">
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Interesting
-									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingInteresting) ?>/10</span>
+									<div class="text-warning fs-5">
+										<?php
+										$filled = (int)floor($post->review->ratingInteresting);
+										$empty = 5 - $filled;
+										echo str_repeat('★', $filled);
+										echo str_repeat('☆', $empty);
+										?>
+									</div>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Important
-									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingImportant) ?>/10</span>
+									<div class="text-warning fs-5">
+										<?php
+										$filled = (int)floor($post->review->ratingImportant);
+										$empty = 5 - $filled;
+										echo str_repeat('★', $filled);
+										echo str_repeat('☆', $empty);
+										?>
+									</div>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Innovative
-									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingInovative) ?>/10</span>
+									<div class="text-warning fs-5">
+										<?php
+										$filled = (int)floor($post->review->ratingInovative);
+										$empty = 5 - $filled;
+										echo str_repeat('★', $filled);
+										echo str_repeat('☆', $empty);
+										?>
+									</div>
 								</li>
 								<?php if (!empty($post->review->ratingNote)): ?>
 									<li class="list-group-item">
 										<strong>Note:</strong><br>
-										<?= nl2br(htmlspecialchars($post->review->ratingNote)) ?>
+										<div><?= $post->review ? $post->review->ratingNote : '' ?></div>
 									</li>
 								<?php endif; ?>
 							</ul>

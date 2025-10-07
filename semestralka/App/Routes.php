@@ -20,4 +20,6 @@ return function (Router $router) {
 	$router->get('reviews', 'ReviewController@posts');
 	$router->get('reviews/{postId}/create', 'ReviewController@create');
 	$router->get('reviews/{reviewId}/edit', 'ReviewController@edit');
+	$router->post('reviews/update', 'ReviewController@store');
+	$router->post('reviews/store', 'ReviewController@store');
 };

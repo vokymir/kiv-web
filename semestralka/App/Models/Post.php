@@ -220,37 +220,41 @@ ORDER BY p.created_at DESC
 		return rand(1, 5); // TODO
 	}
 
-	public static function findAssignedToReviewer(int $reviewerId): array
+
+	public static function findAssignedToReviewer(int $userId): array
 	{
 		$db = new Database();
 
-		// Select posts assigned to this reviewer (where review.postId exists or where reviewer has an assignment logic)
 		$rows = $db->query("
 		SELECT 
 			p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at,
 			u.username AS authorName,
 			r.id AS reviewId, r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
 		FROM posts p
-		JOIN users u ON u.id = p.userId
-		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :reviewerId
-		WHERE p.status != 99 -- example: exclude published (adjust if you have Status enum for Published)
+		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :userId
+		LEFT JOIN users u ON p.userId = u.id
+		WHERE p.status < 100   -- exclude already published posts, adjust as needed
 		ORDER BY p.created_at DESC
 	")
-			->bind(':reviewerId', $reviewerId)
+			->bind(':userId', $userId)
 			->fetchAll();
 
-		// Convert each row into Post object, with attached review if exists
 		return array_map(function ($row) {
 			$post = new self($row);
 
+			// Attach existing review if found
 			if (!empty($row['reviewId'])) {
-				$post->review = (object)[
-					'id' => (int)$row['reviewId'],
-					'ratingInteresting' => (int)$row['ratingInteresting'],
-					'ratingImportant' => (int)$row['ratingImportant'],
-					'ratingInovative' => (int)$row['ratingInovative'],
-					'ratingNote' => $row['ratingNote'] ?? ''
-				];
+				$post->review = new \App\Models\Review([
+					'id' => $row['reviewId'],
+					'postId' => $row['id'],
+					'userId' => $row['userId'],
+					'ratingInteresting' => $row['ratingInteresting'],
+					'ratingImportant' => $row['ratingImportant'],
+					'ratingInovative' => $row['ratingInovative'],
+					'ratingNote' => $row['ratingNote']
+				]);
+			} else {
+				$post->review = null;
 			}
 
 			$post->author = $row['authorName'] ?? null;
