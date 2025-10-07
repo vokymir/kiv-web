@@ -17,4 +17,7 @@ return function (Router $router) {
 	$router->get('posts/{postId}/edit', 'PostController@edit');
 	$router->post('posts/update/{postId}', 'PostController@update');
 	$router->get('posts/{postId}/delete', 'PostController@delete');
+	$router->get('reviews', 'ReviewController@posts');
+	$router->get('reviews/{postId}/create', 'ReviewController@create');
+	$router->get('reviews/{reviewId}/edit', 'ReviewController@edit');
 };

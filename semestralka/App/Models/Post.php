@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Core\Database;
 use App\Config\Config;
+use App\Models\Status;
 use DateTime;
+use Status as StatusStatus;
 
 class Post
 {
@@ -17,6 +19,7 @@ class Post
 	public Status $status;
 	public DateTime $createdAt;
 	public ?string $author = null;
+	public ?Review $review = null;
 
 	public function __construct(array $data = [])
 	{
@@ -215,5 +218,64 @@ ORDER BY p.created_at DESC
 	public function rating(): int
 	{
 		return rand(1, 5); // TODO
+	}
+
+	public static function findAssignedToReviewer(int $reviewerId): array
+	{
+		$db = new Database();
+
+		// Select posts assigned to this reviewer (where review.postId exists or where reviewer has an assignment logic)
+		$rows = $db->query("
+		SELECT 
+			p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at,
+			u.username AS authorName,
+			r.id AS reviewId, r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
+		FROM posts p
+		JOIN users u ON u.id = p.userId
+		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :reviewerId
+		WHERE p.status != 99 -- example: exclude published (adjust if you have Status enum for Published)
+		ORDER BY p.created_at DESC
+	")
+			->bind(':reviewerId', $reviewerId)
+			->fetchAll();
+
+		// Convert each row into Post object, with attached review if exists
+		return array_map(function ($row) {
+			$post = new self($row);
+
+			if (!empty($row['reviewId'])) {
+				$post->review = (object)[
+					'id' => (int)$row['reviewId'],
+					'ratingInteresting' => (int)$row['ratingInteresting'],
+					'ratingImportant' => (int)$row['ratingImportant'],
+					'ratingInovative' => (int)$row['ratingInovative'],
+					'ratingNote' => $row['ratingNote'] ?? ''
+				];
+			}
+
+			$post->author = $row['authorName'] ?? null;
+
+			return $post;
+		}, $rows);
+	}
+
+	public static function findByUserOnlyDrafts(int $userId): array
+	{
+		$db = new Database();
+
+		// Exclude published posts 
+		$rows = $db->query("
+		SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, u.username AS author
+		FROM posts p
+		LEFT JOIN users u ON p.userId = u.id
+		WHERE p.userId = :userId
+		  AND p.status != :publishedStatus
+		ORDER BY p.created_at DESC
+	")
+			->bind(':userId', $userId)
+			->bind(':publishedStatus', Status::Accepted->value ?? 99)
+			->fetchAll();
+
+		return array_map(fn($row) => new self($row), $rows);
 	}
 }

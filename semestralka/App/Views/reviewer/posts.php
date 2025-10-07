@@ -1,3 +1,87 @@
 <?php
 
-// show all posts assigned to the reviewer. show add/edit review buttons for each post, excluding already published posts
+use App\Config\Config;
+?>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+	<h1>Your Assigned Reviews</h1>
+</div>
+
+<?php if ($assignedPosts): ?>
+	<div class="accordion" id="reviewerPostsAccordion">
+		<?php foreach ($assignedPosts as $index => $post): ?>
+			<div class="accordion-item">
+				<h2 class="accordion-header" id="heading<?= $post->id ?>">
+					<button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?>"
+						type="button" data-bs-toggle="collapse"
+						data-bs-target="#collapse<?= $post->id ?>"
+						aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>"
+						aria-controls="collapse<?= $post->id ?>">
+						<?= htmlspecialchars($post->title) ?>
+						<span class="text-muted ms-2">(Author: <?= htmlspecialchars($post->authorName ?? 'Unknown') ?>)</span>
+					</button>
+				</h2>
+				<div id="collapse<?= $post->id ?>"
+					class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>"
+					aria-labelledby="heading<?= $post->id ?>"
+					data-bs-parent="#reviewerPostsAccordion">
+					<div class="accordion-body">
+
+						<!-- Abstract -->
+						<p><strong>Abstract:</strong></p>
+						<p><?= nl2br(htmlspecialchars($post->abstract)) ?></p>
+
+						<!-- PDF -->
+						<?php if (!empty($post->pathPDF)): ?>
+							<a href="<?= Config::BASE_URL ?>download/pdf/<?= $post->pathPDF ?>"
+								target="_blank"
+								class="btn btn-sm btn-primary mb-3">
+								Download PDF
+							</a>
+						<?php endif; ?>
+
+						<hr>
+
+						<!-- Review Section -->
+						<?php if (!empty($post->review)): ?>
+							<h5>Your Review</h5>
+							<ul class="list-group mb-3">
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									Interesting
+									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingInteresting) ?>/10</span>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									Important
+									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingImportant) ?>/10</span>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									Innovative
+									<span class="badge bg-secondary"><?= htmlspecialchars($post->review->ratingInovative) ?>/10</span>
+								</li>
+								<?php if (!empty($post->review->ratingNote)): ?>
+									<li class="list-group-item">
+										<strong>Note:</strong><br>
+										<?= nl2br(htmlspecialchars($post->review->ratingNote)) ?>
+									</li>
+								<?php endif; ?>
+							</ul>
+
+							<a href="<?= Config::BASE_URL ?>reviews/<?= $post->review->id ?>/edit"
+								class="btn btn-warning">
+								Edit Review
+							</a>
+						<?php else: ?>
+							<p class="text-muted mb-3">You haven’t reviewed this post yet.</p>
+							<a href="<?= Config::BASE_URL ?>reviews/<?= $post->id ?>/create"
+								class="btn btn-success">
+								Add Review
+							</a>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
+		<?php endforeach; ?>
+	</div>
+<?php else: ?>
+	<p class="text-center text-muted">No posts have been assigned to you yet.</p>
+<?php endif; ?>
