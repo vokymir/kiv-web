@@ -29,7 +29,7 @@ use App\Config\Config;
 					<div class="accordion-body">
 						<p><?= nl2br(htmlspecialchars($post->abstract)) ?></p>
 						<?php if (!empty($post->pathPDF)): ?>
-							<a href="<?= Config::BASE_URL ?>download/pdf/<?= $post->pathPDF ?>" class="btn btn-primary">Download PDF</a>
+							<a href="<?= Config::BASE_URL ?>download/pdf/<?= $post->pathPDF ?>" target="_blank" class="btn btn-primary">Download PDF</a>
 						<?php endif; ?>
 
 						<?php if ($post->canEdit()): ?>
