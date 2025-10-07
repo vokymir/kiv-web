@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Database;
 use App\Config\Config;
 use App\Models\Status;
+use App\Models\Review;
 use DateTime;
 
 class Post
@@ -40,143 +41,128 @@ class Post
 
 	public function create(array $data, array $file = []): bool
 	{
-		if (empty($data['title']) || empty($data['abstract'])) {
-			throw new \InvalidArgumentException("Title and abstract are required.");
-		}
+		self::validateData($data);
 
-		// Handle optional PDF upload
-		$filename = '';
+		$pdfName = '';
 		if (!empty($file['tmp_name'])) {
-			$filename = $this->uploadPdf($file);
+			$pdfName = $this->uploadPdf($file);
 		}
 
 		$db = new Database();
 		return $db->query("
-        INSERT INTO posts (userId, title, abstract, pathPDF, status)
-        VALUES (:userId, :title, :abstract, :pathPDF, :status)
-    ")
+			INSERT INTO posts (userId, title, abstract, pathPDF, status)
+			VALUES (:userId, :title, :abstract, :pathPDF, :status)
+		")
 			->bind(':userId', $data['userId'])
 			->bind(':title', $data['title'])
 			->bind(':abstract', $data['abstract'])
-			->bind(':pathPDF', $filename)
+			->bind(':pathPDF', $pdfName)
 			->bind(':status', $data['status']->value)
 			->execute();
 	}
 
 	public function update(int $postId, array $data, array $file = []): bool
 	{
-		if (empty($data['title']) || empty($data['abstract'])) {
-			throw new \InvalidArgumentException("Title and abstract are required.");
-		}
+		self::validateData($data);
 
-		// Keep existing PDF filename unless a new file is uploaded
-		$pdfFilename = $this->getPdfFilename($postId);
+		$pdfName = $this->getPdfFilename($postId);
 		if (!empty($file['tmp_name'])) {
-			$pdfFilename = $this->uploadPdf($file);
+			if ($pdfName && file_exists(Config::UPLOAD_DIR . $pdfName)) {
+				unlink(Config::UPLOAD_DIR . $pdfName);
+			}
+			$pdfName = $this->uploadPdf($file);
 		}
 
 		$db = new Database();
-
 		return $db->query("
-        UPDATE posts
-        SET title = :title,
-            abstract = :abstract,
-            pathPDF = :pathPDF,
-            status = :status
-        WHERE id = :id
-    ")
+			UPDATE posts
+			SET title = :title,
+				abstract = :abstract,
+				pathPDF = :pathPDF,
+				status = :status
+			WHERE id = :id
+		")
 			->bind(':title', $data['title'])
 			->bind(':abstract', $data['abstract'])
-			->bind(':pathPDF', $pdfFilename)
-			->bind(':status', $data['status'])
+			->bind(':pathPDF', $pdfName)
+			->bind(':status', is_object($data['status']) ? $data['status']->value : $data['status'])
 			->bind(':id', $postId)
 			->execute();
 	}
 
 	public function delete(int $postId): bool
 	{
-		// Remove PDF file if it exists
 		$filename = $this->getPdfFilename($postId);
 		if ($filename) {
 			$filePath = Config::UPLOAD_DIR . $filename;
-			if (file_exists($filePath)) {
+			if (is_file($filePath)) {
 				unlink($filePath);
 			}
 		}
 
 		$db = new Database();
-
 		return $db->query("DELETE FROM posts WHERE id = :id")
 			->bind(':id', $postId)
 			->execute();
 	}
 
-
-	// ===== FINDs =====
+	// ===== FIND =====
 
 	public static function find(int $postId): ?Post
 	{
 		$db = new Database();
 		$row = $db->query("
-SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, 
-       u.username AS author
-FROM posts p
-JOIN users u ON u.id = p.userId
-WHERE p.id = :postId
-LIMIT 1
-			")
-			->bind(':postId', $postId)
+			SELECT p.*, u.username AS author
+			FROM posts p
+			JOIN users u ON u.id = p.userId
+			WHERE p.id = :id
+			LIMIT 1
+		")
+			->bind(':id', $postId)
 			->fetchFirst();
 
-		if (!$row) {
-			return null;
-		}
-
-		return new Post($row);
+		return $row ? new self($row) : null;
 	}
 
 	public static function findByUser(int $userId): array
 	{
 		$db = new Database();
 		$rows = $db->query("
-SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, u.username AS author
-FROM posts p
-LEFT JOIN users u ON p.userId = u.id
-WHERE p.userId = :userId
-ORDER BY p.created_at DESC
-			")
-			->bind(':userId', $userId)->fetchAll();
+			SELECT p.*, u.username AS author
+			FROM posts p
+			LEFT JOIN users u ON p.userId = u.id
+			WHERE p.userId = :uid
+			ORDER BY p.created_at DESC
+		")
+			->bind(':uid', $userId)
+			->fetchAll();
 
-		return array_map(fn($row) => new self($row), $rows);
+		return array_map(fn($r) => new self($r), $rows);
 	}
-
 
 	public static function findAssignedToReviewer(int $userId): array
 	{
 		$db = new Database();
-
 		$rows = $db->query("
-		SELECT 
-			p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at,
-			u.username AS authorName,
-			r.id AS reviewId, r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
-		FROM post_reviewer pr
-		JOIN posts p ON pr.postId = p.id
-		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :userId
-		LEFT JOIN users u ON p.userId = u.id
-		WHERE pr.userId = :userId
-		  AND p.status = 10  -- include only drafts
-		ORDER BY p.created_at DESC
-	")
-			->bind(':userId', $userId)
+			SELECT 
+				p.*, u.username AS authorName,
+				r.id AS reviewId,
+				r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
+			FROM post_reviewer pr
+			JOIN posts p ON pr.postId = p.id
+			LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :uid
+			LEFT JOIN users u ON p.userId = u.id
+			WHERE pr.userId = :uid
+			  AND p.status = 10
+			ORDER BY p.created_at DESC
+		")
+			->bind(':uid', $userId)
 			->fetchAll();
 
 		return array_map(function ($row) {
 			$post = new self($row);
-
-			// Attach existing review if found
 			if (!empty($row['reviewId'])) {
-				$post->review = new \App\Models\Review([
+				$post->review = new Review([
 					'id' => $row['reviewId'],
 					'postId' => $row['id'],
 					'userId' => $row['userId'],
@@ -185,33 +171,36 @@ ORDER BY p.created_at DESC
 					'ratingInovative' => $row['ratingInovative'],
 					'ratingNote' => $row['ratingNote']
 				]);
-			} else {
-				$post->review = null;
 			}
-
 			$post->author = $row['authorName'] ?? null;
-
 			return $post;
 		}, $rows);
 	}
 
 	// ===== HELPERS =====
 
+	private static function validateData(array $data): void
+	{
+		if (empty($data['title']) || empty($data['abstract'])) {
+			throw new \InvalidArgumentException("Title and abstract are required.");
+		}
+		if (mb_strlen($data['title']) > 255) {
+			throw new \InvalidArgumentException("Title must be shorter than 255 characters.");
+		}
+	}
+
 	private function uploadPdf(array $file): string
 	{
-		$uploadDir = Config::UPLOAD_DIR;
-
+		$uploadDir = rtrim(Config::UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 		if (!is_dir($uploadDir)) {
 			mkdir($uploadDir, 0777, true);
 		}
 
-		// Validate MIME type
 		$fileType = mime_content_type($file['tmp_name']);
 		if ($fileType !== 'application/pdf') {
 			throw new \InvalidArgumentException("Only PDF files are allowed.");
 		}
 
-		// Sanitize and generate filename
 		$originalName = pathinfo($file['name'], PATHINFO_FILENAME);
 		$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
 		$filename = time() . '_' . $safeName . '.pdf';
@@ -222,6 +211,16 @@ ORDER BY p.created_at DESC
 		}
 
 		return $filename;
+	}
+
+	private function getPdfFilename(int $postId): string
+	{
+		$db = new Database();
+		$row = $db->query("SELECT pathPDF FROM posts WHERE id = :id")
+			->bind(':id', $postId)
+			->fetchFirst();
+
+		return $row['pathPDF'] ?? '';
 	}
 
 	public function isStatus(Status $status): bool
@@ -239,41 +238,26 @@ ORDER BY p.created_at DESC
 		return $this->status->label();
 	}
 
-	private function getPdfFilename(int $postId): string
-	{
-		$db = new Database();
-
-		$result = $db
-			->query("SELECT pathPDF FROM posts WHERE id = :id")
-			->bind(':id', $postId)
-			->fetchFirst();
-
-		return $result['pathPDF'] ?? '';
-	}
-
 	public function rating(): int
 	{
-		$db = new \App\Core\Database();
-
+		$db = new Database();
 		$rows = $db->query("
-SELECT ratingInteresting, ratingImportant, ratingInovative
-FROM reviews
-WHERE postId = :postId
-		    ")
-			->bind(':postId', $this->id)
+			SELECT ratingInteresting, ratingImportant, ratingInovative
+			FROM reviews
+			WHERE postId = :pid
+		")
+			->bind(':pid', $this->id)
 			->fetchAll();
 
 		if (!$rows) {
-			return 0; // no reviews yet
+			return 0;
 		}
 
 		$sum = 0;
-		$count = count($rows);
-
-		foreach ($rows as $review) {
-			$sum += ($review['ratingInteresting'] + $review['ratingImportant'] + $review['ratingInovative']) / 3;
+		foreach ($rows as $r) {
+			$sum += ($r['ratingInteresting'] + $r['ratingImportant'] + $r['ratingInovative']) / 3;
 		}
 
-		return (int)round($sum / $count);
+		return (int)round($sum / count($rows));
 	}
 }

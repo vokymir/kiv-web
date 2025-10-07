@@ -69,50 +69,6 @@ class Review
 			->execute();
 	}
 
-	public static function save(array $data): bool
-	{
-		$db = new Database();
-
-		$existing = $db->query("
-			SELECT id FROM reviews WHERE postId = :postId AND userId = :userId LIMIT 1
-		")
-			->bind(':postId', $data['postId'])
-			->bind(':userId', $data['userId'])
-			->fetchFirst();
-
-		if ($existing) {
-			// Update existing review
-			return $db->query("
-				UPDATE reviews
-				SET ratingInteresting = :ratingInteresting,
-					ratingImportant = :ratingImportant,
-					ratingInovative = :ratingInovative,
-					ratingNote = :ratingNote,
-					created_at = NOW()
-				WHERE id = :id
-			")
-				->bind(':ratingInteresting', $data['ratingInteresting'])
-				->bind(':ratingImportant', $data['ratingImportant'])
-				->bind(':ratingInovative', $data['ratingInovative'])
-				->bind(':ratingNote', $data['ratingNote'])
-				->bind(':id', $existing['id'])
-				->execute();
-		}
-
-		// Create new review
-		return $db->query("
-			INSERT INTO reviews (postId, userId, ratingInteresting, ratingImportant, ratingInovative, ratingNote)
-			VALUES (:postId, :userId, :ratingInteresting, :ratingImportant, :ratingInovative, :ratingNote)
-		")
-			->bind(':postId', $data['postId'])
-			->bind(':userId', $data['userId'])
-			->bind(':ratingInteresting', $data['ratingInteresting'])
-			->bind(':ratingImportant', $data['ratingImportant'])
-			->bind(':ratingInovative', $data['ratingInovative'])
-			->bind(':ratingNote', $data['ratingNote'])
-			->execute();
-	}
-
 	// ===== FINDs =====
 
 	public static function findById(int $reviewId): ?Review
@@ -128,9 +84,15 @@ class Review
 	public static function findByPostAndUser(int $postId, int $userId): ?Review
 	{
 		$db = new Database();
+
 		$row = $db->query("
-		SELECT * FROM reviews WHERE postId = :postId AND userId = :userId LIMIT 1
-	")
+		SELECT r.*
+		FROM post_reviewer pr
+		LEFT JOIN reviews r ON r.postId = pr.postId AND r.userId = pr.userId
+		WHERE pr.postId = :postId
+		  AND pr.userId = :userId
+		LIMIT 1
+			")
 			->bind(':postId', $postId)
 			->bind(':userId', $userId)
 			->fetchFirst();

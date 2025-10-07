@@ -20,12 +20,18 @@ class Controller
 
 	public static function redirect(string $url): void
 	{
+		// remove trailing slashes
+		$base = rtrim(Config::BASE_URL, '/');
+		$path = ltrim($url, '/');
+
+		$target = $base . '/' . $path;
+
 		if (!headers_sent()) {
-			header('Location: ' . Config::BASE_URL . $url);
+			header('Location: ' . $target);
 			exit;
 		} else {
-			// Fallback: JavaScript redirect if headers already sent
-			echo "<script>window.location.href = '" . htmlspecialchars($url, ENT_QUOTES) . "';</script>";
+			// fallback for already sent headers
+			echo "<script>window.location.href = '" . htmlspecialchars($target, ENT_QUOTES) . "';</script>";
 			exit;
 		}
 	}

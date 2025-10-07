@@ -10,6 +10,48 @@ use App\Config\Config;
 
 class AuthController extends Controller
 {
+	public function login(): void
+	{
+		$username = $_POST['username'] ?? '';
+		$password = $_POST['password'] ?? '';
+
+		if (Auth::attemptLogin($username, $password)) {
+			self::redirect('');
+		} else {
+			self::renderView('public/login', ['error' => 'Invalid credentials...']);
+		}
+	}
+
+	public function logout(): void
+	{
+		Auth::logout();
+		self::redirect('login');
+	}
+
+	public function register(): void
+	{
+		$username = trim($_POST['username'] ?? '');
+		$password = $_POST['password'] ?? '';
+		$confirmPassword = $_POST['confirm_password'] ?? '';
+		$name = trim($_POST['name'] ?? '');
+
+		if ($username === '' || $password === '' || $confirmPassword === '' || $name === '') {
+			self::renderView('public/register', ['error' => 'Please fill all fields.']);
+			return;
+		}
+
+		if ($password !== $confirmPassword) {
+			self::renderView('public/register', ['error' => 'Passwords must match.']);
+			return;
+		}
+
+		if (!Auth::registerUser($username, $password, $name, Role::Author->value)) {
+			self::renderView('public/register', ['error' => 'Username already exists.']);
+			return;
+		}
+
+		self::redirect('login');
+	}
 	public function showLogin(): void
 	{
 		self::renderView("public/login");
@@ -18,78 +60,5 @@ class AuthController extends Controller
 	public function showRegister(): void
 	{
 		self::renderView('public/register');
-	}
-
-	public function login(): void
-	{
-		$username = $_POST['username'] ?? '';
-		$password = $_POST['password'] ?? '';
-
-		$db = new Database();
-		$user = $db
-			->query('SELECT * FROM users WHERE username = :un')
-			->bind(':un', $username)
-			->fetchFirst();
-
-		if ($user && password_verify($password, $user['passwordHash'])) {
-			Auth::login($user);
-			header('Location: ' . Config::BASE_URL);
-			exit;
-		} else {
-			$error = 'Invalid credentials...';
-			self::renderView('public/login', ['error' => $error]);
-			return;
-		}
-	}
-
-	public function logout(): void
-	{
-		Auth::logout();
-		header('Location: ' . Config::BASE_URL . 'login');
-		exit;
-	}
-
-	public function register(): void
-	{
-		$username = trim($_POST['username'] ?? '');
-		$password = $_POST['password'] ?? '';
-		$name = $_POST['name'] ?? '';
-		$confirmPassword = $_POST['confirm_password'] ?? '';
-		$role = Role::Author;
-
-		if ($username === '' || $password === '' || $confirmPassword === '' || $name === '') {
-			$error = 'Please fill all fields...';
-			self::renderView('public/register', ['error' => $error]);
-			return;
-		}
-
-		if ($password !== $confirmPassword) {
-			$error = 'You must have the same password.';
-			self::renderView('public/register', ['error' => $error]);
-			return;
-		}
-
-		$db = new Database();
-		$u = $db
-			->query('SELECT id FROM users WHERE username = :un')
-			->bind(':un', $username)
-			->fetchFirst();
-		if ($u) {
-			$error = 'Username exists...';
-			self::renderView('public/register', ['error' => $error]);
-			return;
-		}
-
-		$hash = password_hash($password, PASSWORD_BCRYPT);
-		$db
-			->query('INSERT INTO users (username, passwordHash, role, name) VALUES (:username, :passwordHash, :role, :name)')
-			->bind(':username', $username)
-			->bind(':passwordHash', $hash)
-			->bind(':role', $role->value)
-			->bind(':name', $name)
-			->execute();
-
-		header('Location: ' . Config::BASE_URL . 'login');
-		exit;
 	}
 }

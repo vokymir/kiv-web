@@ -15,14 +15,14 @@ class DownloadController
 			exit("File not found");
 		}
 
-		// Force the browser to display PDF inline
+		// force the browser to display PDF inline
 		header('Content-Type: application/pdf');
 		header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
 		header('Content-Transfer-Encoding: binary');
 		header('Accept-Ranges: bytes');
 		header('Content-Length: ' . filesize($filePath));
 
-		// Clear output buffer before reading the file
+		// clear output buffer before reading the file
 		if (ob_get_level()) {
 			ob_end_clean();
 		}

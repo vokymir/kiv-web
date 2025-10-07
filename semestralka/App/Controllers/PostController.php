@@ -9,12 +9,16 @@ use App\Models\Status;
 
 class PostController extends Controller
 {
+
 	public function posts(): void
 	{
+		$userId = $_SESSION['user']['id'] ?? null;
+		if (!$userId) {
+			self::redirect('login');
+			return;
+		}
 
-		$userId = $_SESSION['user']['id'];
 		$posts = Post::findByUser($userId);
-
 		self::renderView('author/posts', ['posts' => $posts]);
 	}
 
@@ -25,78 +29,78 @@ class PostController extends Controller
 
 	public function edit(int $postId): void
 	{
-		$post = new Post();
-		$existing = $post->find($postId);
-
-		if (!$existing) {
+		$post = Post::find($postId);
+		if (!$post) {
 			http_response_code(404);
-			echo "Post not found";
+			echo "Post not found.";
 			return;
 		}
 
-		self::renderView('author/edit', ['post' => $existing]);
-	}
-
-	public function update(int $postId): void
-	{
-		$userId = $_SESSION['user']['id'] ?? null;
-		if (!$userId) {
-			header('Location: ' . Config::BASE_URL . 'login');
-			exit;
-		}
-
-		$post = new Post();
-		try {
-			$post->update($postId, [
-				'title' => trim($_POST['title'] ?? ''),
-				'abstract' => trim($_POST['abstract'] ?? ''),
-				'status' => $_POST['status'] ?? Status::PendingReview
-			], $_FILES['pdf'] ?? []);
-
-			header('Location: ' . Config::BASE_URL . 'posts');
-			exit;
-		} catch (\Exception $e) {
-			self::renderView('author/edit', [
-				'error' => $e->getMessage(),
-				'post' => $post->find($postId)
-			]);
-		}
-	}
-
-	public function delete(int $postId): void
-	{
-		$post = new Post();
-		try {
-			$post->delete($postId);
-			header('Location: ' . Config::BASE_URL . 'posts');
-			exit;
-		} catch (\Exception $e) {
-			http_response_code(500);
-			echo "Failed to delete post: " . $e->getMessage();
-		}
+		self::renderView('author/edit', ['post' => $post]);
 	}
 
 	public function storeNew(): void
 	{
 		$userId = $_SESSION['user']['id'] ?? null;
 		if (!$userId) {
-			header('Location: ' . Config::BASE_URL . 'login');
-			exit;
+			self::redirect('login');
+			return;
 		}
 
-		$post = new Post();
 		try {
+			$post = new Post();
 			$post->create([
 				'userId' => $userId,
-				'title' => trim($_POST['title'] ?? ''),
-				'abstract' => trim($_POST['abstract'] ?? ''),
+				'title' => self::sanitize($_POST['title'] ?? ''),
+				'abstract' => self::sanitize($_POST['abstract'] ?? ''),
 				'status' => Status::PendingReview
 			], $_FILES['pdf'] ?? []);
 
-			header('Location: ' . Config::BASE_URL . 'posts');
-			exit;
-		} catch (\Exception $e) {
+			self::redirect('posts');
+		} catch (\Throwable $e) {
 			self::renderView('author/new', ['error' => $e->getMessage()]);
 		}
+	}
+
+	public function update(int $postId): void
+	{
+		$userId = $_SESSION['user']['id'] ?? null;
+		if (!$userId) {
+			self::redirect('login');
+			return;
+		}
+
+		try {
+			$post = new Post();
+			$post->update($postId, [
+				'title' => self::sanitize($_POST['title'] ?? ''),
+				'abstract' => self::sanitize($_POST['abstract'] ?? ''),
+				'status' => $_POST['status'] ?? Status::PendingReview
+			], $_FILES['pdf'] ?? []);
+
+			self::redirect('posts');
+		} catch (\Throwable $e) {
+			self::renderView('author/edit', [
+				'error' => $e->getMessage(),
+				'post' => Post::find($postId)
+			]);
+		}
+	}
+
+	public function delete(int $postId): void
+	{
+		try {
+			$post = new Post();
+			$post->delete($postId);
+			self::redirect('posts');
+		} catch (\Throwable $e) {
+			http_response_code(500);
+			echo "Failed to delete post: " . htmlspecialchars($e->getMessage());
+		}
+	}
+
+	private static function sanitize(string $input): string
+	{
+		return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 	}
 }

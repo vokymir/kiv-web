@@ -6,6 +6,51 @@ use App\Models\Role;
 
 class Auth
 {
+	public static function attemptLogin(string $username, string $password): ?array
+	{
+		$db = new Database();
+		$user = $db->query('SELECT * FROM users WHERE username = :un')
+			->bind(':un', $username)
+			->fetchFirst();
+
+		if ($user && password_verify($password, $user['passwordHash'])) {
+			self::login($user);
+			return $user;
+		}
+		return null;
+	}
+
+	public static function registerUser(string $username, string $password, string $name, int $role): bool
+	{
+		$db = new Database();
+		if (self::userExists($username)) return false;
+
+		$hash = password_hash($password, PASSWORD_BCRYPT);
+
+		$db->query('INSERT INTO users (username, passwordHash, role, name)
+		            VALUES (:username, :passwordHash, :role, :name)')
+			->bind(':username', $username)
+			->bind(':passwordHash', $hash)
+			->bind(':role', $role)
+			->bind(':name', $name)
+			->execute();
+
+		return true;
+	}
+
+	public static function userExists(string $username): bool
+	{
+		$db = new Database();
+		return (bool) $db->query('SELECT id FROM users WHERE username = :un')
+			->bind(':un', $username)
+			->fetchFirst();
+	}
+
+	public static function logout(): void
+	{
+		session_destroy();
+	}
+
 	public static function user(): ?array
 	{
 		return $_SESSION['user'] ?? null;
@@ -24,11 +69,6 @@ class Auth
 			'name' => $user['name'],
 			'role' => $user['role']
 		];
-	}
-
-	public static function logout(): void
-	{
-		unset($_SESSION['user']);
 	}
 
 	public static function isRole(Role $role): bool
