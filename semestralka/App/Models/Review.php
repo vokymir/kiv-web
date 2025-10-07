@@ -32,28 +32,7 @@ class Review
 		}
 	}
 
-	public static function findById(int $reviewId): ?Review
-	{
-		$db = new Database();
-		$row = $db->query("SELECT * FROM reviews WHERE id = :id")
-			->bind(':id', $reviewId)
-			->fetchFirst();
-
-		return $row ? new self($row) : null;
-	}
-
-	public static function findByPostAndUser(int $postId, int $userId): ?Review
-	{
-		$db = new Database();
-		$row = $db->query("
-		SELECT * FROM reviews WHERE postId = :postId AND userId = :userId LIMIT 1
-	")
-			->bind(':postId', $postId)
-			->bind(':userId', $userId)
-			->fetchFirst();
-
-		return $row ? new self($row) : null;
-	}
+	// ===== CRUD =====
 
 	public static function create(array $data): bool
 	{
@@ -132,5 +111,30 @@ class Review
 			->bind(':ratingInovative', $data['ratingInovative'])
 			->bind(':ratingNote', $data['ratingNote'])
 			->execute();
+	}
+
+	// ===== FINDs =====
+
+	public static function findById(int $reviewId): ?Review
+	{
+		$db = new Database();
+		$row = $db->query("SELECT * FROM reviews WHERE id = :id")
+			->bind(':id', $reviewId)
+			->fetchFirst();
+
+		return $row ? new self($row) : null;
+	}
+
+	public static function findByPostAndUser(int $postId, int $userId): ?Review
+	{
+		$db = new Database();
+		$row = $db->query("
+		SELECT * FROM reviews WHERE postId = :postId AND userId = :userId LIMIT 1
+	")
+			->bind(':postId', $postId)
+			->bind(':userId', $userId)
+			->fetchFirst();
+
+		return $row ? new self($row) : null;
 	}
 }

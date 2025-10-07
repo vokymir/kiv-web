@@ -14,6 +14,9 @@ class User
 	public string $username;
 	public string $passwordHash;
 
+	// ===== CRUD =====
+
+	// ===== FINDs =====
 	public static function getRandomSpeakers(int $limit = 3): array
 	{
 		$db = new Database();

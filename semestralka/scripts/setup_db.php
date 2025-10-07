@@ -58,6 +58,15 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY(postId) REFERENCES posts(id)
 );")->execute();
 
+$db->query("
+CREATE TABLE IF NOT EXISTS post_reviewer (
+    postId INT NOT NULL,
+    userId INT NOT NULL,
+    PRIMARY KEY (postId, userId),
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);")->execute();
+
 echo "Tables created.\n";
 
 function h($p)

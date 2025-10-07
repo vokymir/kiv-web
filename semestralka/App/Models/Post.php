@@ -6,7 +6,6 @@ use App\Core\Database;
 use App\Config\Config;
 use App\Models\Status;
 use DateTime;
-use Status as StatusStatus;
 
 class Post
 {
@@ -37,6 +36,8 @@ class Post
 		}
 	}
 
+	// ===== CRUD =====
+
 	public function create(array $data, array $file = []): bool
 	{
 		if (empty($data['title']) || empty($data['abstract'])) {
@@ -49,9 +50,7 @@ class Post
 			$filename = $this->uploadPdf($file);
 		}
 
-		// Insert into database 
 		$db = new Database();
-
 		return $db->query("
         INSERT INTO posts (userId, title, abstract, pathPDF, status)
         VALUES (:userId, :title, :abstract, :pathPDF, :status)
@@ -62,97 +61,6 @@ class Post
 			->bind(':pathPDF', $filename)
 			->bind(':status', $data['status']->value)
 			->execute();
-	}
-
-	private function uploadPdf(array $file): string
-	{
-		$uploadDir = Config::UPLOAD_DIR;
-
-		if (!is_dir($uploadDir)) {
-			mkdir($uploadDir, 0777, true);
-		}
-
-		// Validate MIME type
-		$fileType = mime_content_type($file['tmp_name']);
-		if ($fileType !== 'application/pdf') {
-			throw new \InvalidArgumentException("Only PDF files are allowed.");
-		}
-
-		// Sanitize and generate filename
-		$originalName = pathinfo($file['name'], PATHINFO_FILENAME);
-		$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
-		$filename = time() . '_' . $safeName . '.pdf';
-		$target = $uploadDir . $filename;
-
-		if (!move_uploaded_file($file['tmp_name'], $target)) {
-			throw new \RuntimeException("Failed to upload PDF file.");
-		}
-
-		return $filename;
-	}
-
-	public function add(int $userId, string $title, string $abstract, string $filename, Status $status): bool
-	{
-		$db = new Database();
-		return $db->query("INSERT INTO posts (userId, title, abstract, pathPDF, status)
-				VALUES (:userId, :title, :abstract, :pathPDF, :status)")
-			->bind(':userId', $userId)
-			->bind(':title', $title)
-			->bind(':abstract', $abstract)
-			->bind(':pathPDF', $filename)
-			->bind(':status', $status->value)
-			->execute();
-	}
-
-	public function isStatus(Status $status): bool
-	{
-		return $this->status === $status;
-	}
-
-	public function canEdit(): bool
-	{
-		return $this->isStatus(Status::PendingReview);
-	}
-
-	public function getStatusName(): string
-	{
-		return $this->status->label();
-	}
-
-	public static function find(int $postId): ?Post
-	{
-		$db = new Database();
-		$row = $db->query("
-        SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, 
-               u.username AS author
-        FROM posts p
-        JOIN users u ON u.id = p.userId
-        WHERE p.id = :postId
-        LIMIT 1
-			")
-			->bind(':postId', $postId)
-			->fetchFirst();
-
-		if (!$row) {
-			return null;
-		}
-
-		return new Post($row);
-	}
-
-	public static function findByUser(int $userId): array
-	{
-		$db = new Database();
-		$rows = $db->query("
-SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, u.username AS author
-FROM posts p
-LEFT JOIN users u ON p.userId = u.id
-WHERE p.userId = :userId
-ORDER BY p.created_at DESC
-			")
-			->bind(':userId', $userId)->fetchAll();
-
-		return array_map(fn($row) => new self($row), $rows);
 	}
 
 	public function update(int $postId, array $data, array $file = []): bool
@@ -203,43 +111,43 @@ ORDER BY p.created_at DESC
 			->execute();
 	}
 
-	private function getPdfFilename(int $postId): string
+
+	// ===== FINDs =====
+
+	public static function find(int $postId): ?Post
 	{
 		$db = new Database();
-
-		$result = $db
-			->query("SELECT pathPDF FROM posts WHERE id = :id")
-			->bind(':id', $postId)
+		$row = $db->query("
+SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, 
+       u.username AS author
+FROM posts p
+JOIN users u ON u.id = p.userId
+WHERE p.id = :postId
+LIMIT 1
+			")
+			->bind(':postId', $postId)
 			->fetchFirst();
 
-		return $result['pathPDF'] ?? '';
+		if (!$row) {
+			return null;
+		}
+
+		return new Post($row);
 	}
 
-	public function rating(): int
+	public static function findByUser(int $userId): array
 	{
-		$db = new \App\Core\Database();
-
-		// Fetch all reviews for this post
+		$db = new Database();
 		$rows = $db->query("
-        SELECT ratingInteresting, ratingImportant, ratingInovative
-        FROM reviews
-        WHERE postId = :postId
-    ")
-			->bind(':postId', $this->id)
-			->fetchAll();
+SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, u.username AS author
+FROM posts p
+LEFT JOIN users u ON p.userId = u.id
+WHERE p.userId = :userId
+ORDER BY p.created_at DESC
+			")
+			->bind(':userId', $userId)->fetchAll();
 
-		if (!$rows) {
-			return 0; // no reviews yet
-		}
-
-		$sum = 0;
-		$count = count($rows);
-
-		foreach ($rows as $review) {
-			$sum += ($review['ratingInteresting'] + $review['ratingImportant'] + $review['ratingInovative']) / 3;
-		}
-
-		return (int)round($sum / $count);
+		return array_map(fn($row) => new self($row), $rows);
 	}
 
 
@@ -252,10 +160,12 @@ ORDER BY p.created_at DESC
 			p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at,
 			u.username AS authorName,
 			r.id AS reviewId, r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
-		FROM posts p
+		FROM post_reviewer pr
+		JOIN posts p ON pr.postId = p.id
 		LEFT JOIN reviews r ON r.postId = p.id AND r.userId = :userId
 		LEFT JOIN users u ON p.userId = u.id
-		WHERE p.status = 10   -- include only drafts
+		WHERE pr.userId = :userId
+		  AND p.status = 10  -- include only drafts
 		ORDER BY p.created_at DESC
 	")
 			->bind(':userId', $userId)
@@ -285,23 +195,85 @@ ORDER BY p.created_at DESC
 		}, $rows);
 	}
 
-	public static function findByUserOnlyDrafts(int $userId): array
+	// ===== HELPERS =====
+
+	private function uploadPdf(array $file): string
+	{
+		$uploadDir = Config::UPLOAD_DIR;
+
+		if (!is_dir($uploadDir)) {
+			mkdir($uploadDir, 0777, true);
+		}
+
+		// Validate MIME type
+		$fileType = mime_content_type($file['tmp_name']);
+		if ($fileType !== 'application/pdf') {
+			throw new \InvalidArgumentException("Only PDF files are allowed.");
+		}
+
+		// Sanitize and generate filename
+		$originalName = pathinfo($file['name'], PATHINFO_FILENAME);
+		$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
+		$filename = time() . '_' . $safeName . '.pdf';
+		$target = $uploadDir . $filename;
+
+		if (!move_uploaded_file($file['tmp_name'], $target)) {
+			throw new \RuntimeException("Failed to upload PDF file.");
+		}
+
+		return $filename;
+	}
+
+	public function isStatus(Status $status): bool
+	{
+		return $this->status === $status;
+	}
+
+	public function canEdit(): bool
+	{
+		return $this->isStatus(Status::PendingReview);
+	}
+
+	public function getStatusName(): string
+	{
+		return $this->status->label();
+	}
+
+	private function getPdfFilename(int $postId): string
 	{
 		$db = new Database();
 
-		// Exclude published posts 
+		$result = $db
+			->query("SELECT pathPDF FROM posts WHERE id = :id")
+			->bind(':id', $postId)
+			->fetchFirst();
+
+		return $result['pathPDF'] ?? '';
+	}
+
+	public function rating(): int
+	{
+		$db = new \App\Core\Database();
+
 		$rows = $db->query("
-		SELECT p.id, p.userId, p.title, p.abstract, p.pathPDF, p.status, p.created_at, u.username AS author
-		FROM posts p
-		LEFT JOIN users u ON p.userId = u.id
-		WHERE p.userId = :userId
-		  AND p.status != :publishedStatus
-		ORDER BY p.created_at DESC
-	")
-			->bind(':userId', $userId)
-			->bind(':publishedStatus', Status::Accepted->value ?? 99)
+SELECT ratingInteresting, ratingImportant, ratingInovative
+FROM reviews
+WHERE postId = :postId
+		    ")
+			->bind(':postId', $this->id)
 			->fetchAll();
 
-		return array_map(fn($row) => new self($row), $rows);
+		if (!$rows) {
+			return 0; // no reviews yet
+		}
+
+		$sum = 0;
+		$count = count($rows);
+
+		foreach ($rows as $review) {
+			$sum += ($review['ratingInteresting'] + $review['ratingImportant'] + $review['ratingInovative']) / 3;
+		}
+
+		return (int)round($sum / $count);
 	}
 }
