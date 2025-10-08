@@ -76,14 +76,6 @@ use App\Models\User;
 									<button type="submit" name="action" value="unassign" class="btn btn-sm btn-danger mt-2">Unassign Selected</button>
 								</div>
 							</div>
-
-							<!-- Publish/Reject/Delete buttons at the very end -->
-							<div class="d-flex gap-2 mt-3 flex-wrap">
-								<button type="submit" name="action" value="publish" class="btn btn-success">Publish</button>
-								<button type="submit" name="action" value="reject" class="btn btn-warning">Reject</button>
-								<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete" class="btn btn-danger"
-									onclick="return confirm('Delete this post?')">Delete</a>
-							</div>
 						</form>
 						<!-- Reviews -->
 						<h5>Reviews</h5>

@@ -69,7 +69,7 @@ use App\Config\Config;
 						<?php endif; ?>
 
 						<?php if ($post->canEdit()): ?>
-							<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete" class="btn btn-danger">Delete</a>
+							<a href="<?= Config::BASE_URL ?>posts/delete/<?= $post->id ?>" class="btn btn-danger">Delete</a>
 						<?php endif; ?>
 					</div>
 				</div>

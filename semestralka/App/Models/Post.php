@@ -192,13 +192,15 @@ class Post
 		$db = new Database();
 		$current = $this->getAssignedReviewerIds();
 
-		$toRemove = array_diff($current, $reviewerIds);
+		$toRemove = array_intersect($current, $reviewerIds);
 		foreach ($toRemove as $uid) {
 			$db->query("DELETE FROM post_reviewer WHERE postId = :pid AND userId = :uid")
 				->bind(':pid', $this->id)
 				->bind(':uid', $uid)
 				->execute();
 		}
+
+		return true;
 	}
 
 	// ===== FIND =====

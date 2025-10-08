@@ -16,7 +16,7 @@ return function (Router $router) {
 	$router->get('download/pdf/{filename}', 'DownloadController@pdf');
 	$router->get('posts/{postId}/edit', 'PostController@edit');
 	$router->post('posts/update/{postId}', 'PostController@update');
-	$router->get('posts/{postId}/delete', 'PostController@delete');
+	$router->get('posts/delete/{postId}', 'PostController@delete');
 	$router->get('reviews', 'ReviewController@posts');
 	$router->get('reviews/{postId}/create', 'ReviewController@create');
 	$router->get('reviews/{reviewId}/edit', 'ReviewController@edit');
@@ -26,5 +26,5 @@ return function (Router $router) {
 	$router->post('users/{userId}/update', 'UserController@update');
 	$router->get('users/{userId}/delete', 'UserController@delete');
 	$router->post('posts/{postId}/update', 'PostController@admin_update');
-	$router->post('posts/{postId}/delete', 'PostController@admin_delete');
+	$router->get('posts/{postId}/delete', 'PostController@admin_delete');
 };
