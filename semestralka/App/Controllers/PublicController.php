@@ -2,18 +2,19 @@
 
 namespace App\Controllers;
 
-use App\Core;
+use App\Config\Config;
+use App\Core\Controller;
 use App\Models\User;
 use App\Models\Post;
 
-class PublicController extends Core\Controller
+class PublicController extends Controller
 {
 	public function index(): void
 	{
 		$speakers = User::getRandomSpeakers(3);
 
 		$data = [
-			'title' => 'homepage',
+			'title' => 'Homepage',
 			'speakers' => $speakers,
 			'isLoggedIn' => !empty($_SESSION['user']),
 		];
@@ -26,7 +27,7 @@ class PublicController extends Core\Controller
 		$posts = Post::findAccepted();
 
 		$data = [
-			'title' => 'program',
+			'title' => "Program",
 			'posts' => $posts,
 		];
 
@@ -36,6 +37,6 @@ class PublicController extends Core\Controller
 	public function error(): void
 	{
 		http_response_code(404);
-		$this::renderView('public/404');
+		$this::renderView('public/404', ['title' => 'Page not found']);
 	}
 }

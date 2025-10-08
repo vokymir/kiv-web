@@ -8,10 +8,6 @@ use App\Config\Config;
 	<div class="col-md-8">
 		<h1 class="mb-4">Create New Post</h1>
 
-		<?php if (!empty($error)): ?>
-			<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-		<?php endif; ?>
-
 		<form action="<?= Config::BASE_URL ?>posts/new" method="post" enctype="multipart/form-data">
 			<!-- Title -->
 			<div class="mb-3">

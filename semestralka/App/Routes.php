@@ -28,4 +28,5 @@ return function (Router $router) {
 	$router->get('users/{userId}/delete', 'UserController@delete');
 	$router->post('posts/{postId}/update', 'PostController@admin_update');
 	$router->get('posts/{postId}/delete', 'PostController@admin_delete');
+	$router->get('error', 'PublicController@error');
 };

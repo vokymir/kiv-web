@@ -3,16 +3,19 @@
 namespace App\Controllers;
 
 use App\Config\Config;
+use App\Core\Controller;
+use App\Core\Flash;
 
-class DownloadController
+class DownloadController extends Controller
 {
+	// show download page for file if exists
 	public function pdf(string $filename): void
 	{
 		$filePath = Config::UPLOAD_DIR . $filename;
 
 		if (!file_exists($filePath)) {
-			http_response_code(404);
-			exit("File not found");
+			Flash::set('error', 'File not found.');
+			self::redirect('error');
 		}
 
 		// force the browser to display PDF inline

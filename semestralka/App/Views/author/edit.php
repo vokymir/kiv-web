@@ -1,18 +1,11 @@
 <?php
 
 use App\Config\Config;
-use App\Models\Post;
 
 ?>
 <div class="row justify-content-center">
 	<div class="col-lg-8 col-md-10">
 		<h1 class="mb-4">Edit Post</h1>
-
-		<?php if (!empty($error)): ?>
-			<div class="alert alert-danger">
-				<?= htmlspecialchars($error) ?>
-			</div>
-		<?php endif; ?>
 
 		<form action="<?= Config::BASE_URL ?>posts/update/<?= $post->id ?>" method="post" enctype="multipart/form-data">
 			<div class="mb-3">

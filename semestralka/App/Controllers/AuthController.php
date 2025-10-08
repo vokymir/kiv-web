@@ -4,13 +4,12 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Controller;
-use App\Core\Database;
 use App\Models\Role;
-use App\Config\Config;
 use App\Core\Flash;
 
 class AuthController extends Controller
 {
+	// try to log user in
 	public function login(): void
 	{
 		$username = $_POST['username'] ?? '';
@@ -25,6 +24,7 @@ class AuthController extends Controller
 		}
 	}
 
+	// log user out
 	public function logout(): void
 	{
 		Auth::logout();
@@ -32,6 +32,7 @@ class AuthController extends Controller
 		self::redirect('login');
 	}
 
+	// try registering user
 	public function register(): void
 	{
 		$username = trim($_POST['username'] ?? '');
@@ -59,11 +60,14 @@ class AuthController extends Controller
 
 		self::redirect('login');
 	}
+
+	// show login page
 	public function showLogin(): void
 	{
 		self::renderView("public/login");
 	}
 
+	// show register page
 	public function showRegister(): void
 	{
 		self::renderView('public/register');
