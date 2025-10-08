@@ -41,7 +41,7 @@ return function (Router $router) {
 	// ===== Users =====
 	$router->get('users', 'UserController@users');
 	$router->post('users/{userId}/update', 'UserController@update');
-	$router->get('users/{userId}/delete', 'UserController@delete');
+	$router->post('users/{userId}/delete', 'UserController@delete');
 
 	// ===== Downloads =====
 	$router->get('download/pdf/{filename}', 'DownloadController@pdf');
