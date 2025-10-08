@@ -86,13 +86,12 @@ class Review
 		$db = new Database();
 
 		$row = $db->query("
-		SELECT r.*
-		FROM post_reviewer pr
-		LEFT JOIN reviews r ON r.postId = pr.postId AND r.userId = pr.userId
-		WHERE pr.postId = :postId
-		  AND pr.userId = :userId
-		LIMIT 1
-			")
+        SELECT r.*
+        FROM reviews r
+        WHERE r.postId = :postId
+          AND r.userId = :userId
+        LIMIT 1
+    ")
 			->bind(':postId', $postId)
 			->bind(':userId', $userId)
 			->fetchFirst();
