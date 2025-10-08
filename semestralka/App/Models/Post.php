@@ -20,6 +20,8 @@ class Post
 	public DateTime $createdAt;
 	public ?string $author = null;
 	public ?Review $review = null;
+	public ?array $reviews = null;
+	public ?array $assignedReviewers = null;
 
 	public function __construct(array $data = [])
 	{
@@ -38,6 +40,47 @@ class Post
 	}
 
 	// ===== CRUD =====
+
+	public static function all(?array $statuses = null): array
+	{
+		$db = new Database();
+
+		$sql = "
+        SELECT 
+            p.*, 
+            u.username AS authorName
+        FROM posts p
+        LEFT JOIN users u ON p.userId = u.id
+    ";
+
+		$bindParams = [];
+
+		if ($statuses) {
+			$placeholders = [];
+			foreach ($statuses as $i => $status) {
+				$ph = ":status$i";
+				$placeholders[] = $ph;
+				$bindParams[$ph] = $status instanceof Status ? $status->value : $status;
+			}
+			$sql .= " WHERE p.status IN (" . implode(',', $placeholders) . ")";
+		}
+
+		$sql .= " ORDER BY p.created_at DESC";
+
+		$rows = $db->query($sql)
+			->bindBulk($bindParams)
+			->fetchAll();
+
+		$posts = array_map(fn($row) => new self($row), $rows);
+
+		// Attach reviews and assigned reviewers for each post
+		foreach ($posts as $post) {
+			$post->assignedReviewers = $post->getAssignedReviewers();
+			$post->reviews = $post->getReviews();
+		}
+
+		return $posts;
+	}
 
 	public function create(array $data, array $file = []): bool
 	{
@@ -90,6 +133,17 @@ class Post
 			->execute();
 	}
 
+
+	public function updateStatus(Status $status): bool
+	{
+		$db = new Database();
+		$this->status = $status;
+		return $db->query("UPDATE posts SET status = :status WHERE id = :pid")
+			->bind(':status', $status->value)
+			->bind(':pid', $this->id)
+			->execute();
+	}
+
 	public function delete(int $postId): bool
 	{
 		$filename = $this->getPdfFilename($postId);
@@ -101,9 +155,50 @@ class Post
 		}
 
 		$db = new Database();
+
+		$db->query("DELETE FROM post_reviewer WHERE postId = :pid")
+			->bind(':pid', $this->id)
+			->execute();
+
+		$db->query("DELETE FROM reviews WHERE postId = :pid")
+			->bind(':pid', $this->id)
+			->execute();
+
 		return $db->query("DELETE FROM posts WHERE id = :id")
 			->bind(':id', $postId)
 			->execute();
+	}
+
+	/// === sorta ===
+
+	public function assignReviewers(array $reviewerIds): bool
+	{
+		$db = new Database();
+		$current = $this->getAssignedReviewerIds();
+
+		$toAdd = array_diff($reviewerIds, $current);
+		foreach ($toAdd as $uid) {
+			$db->query("INSERT INTO post_reviewer (postId, userId) VALUES (:pid, :uid)")
+				->bind(':pid', $this->id)
+				->bind(':uid', $uid)
+				->execute();
+		}
+
+		return true;
+	}
+
+	public function removeReviewers(array $reviewerIds): bool
+	{
+		$db = new Database();
+		$current = $this->getAssignedReviewerIds();
+
+		$toRemove = array_diff($current, $reviewerIds);
+		foreach ($toRemove as $uid) {
+			$db->query("DELETE FROM post_reviewer WHERE postId = :pid AND userId = :uid")
+				->bind(':pid', $this->id)
+				->bind(':uid', $uid)
+				->execute();
+		}
 	}
 
 	// ===== FIND =====
@@ -307,5 +402,24 @@ class Post
 				'note' => $r['ratingNote'],
 			];
 		}, $rows);
+	}
+
+	public function getAssignedReviewers(): array
+	{
+		$db = new Database();
+		$rows = $db->query("
+            SELECT u.*
+            FROM post_reviewer pr
+            JOIN users u ON pr.userId = u.id
+            WHERE pr.postId = :pid
+        ")->bind(':pid', $this->id)
+			->fetchAll();
+
+		return array_map(fn($r) => new User($r), $rows);
+	}
+
+	public function getAssignedReviewerIds(): array
+	{
+		return array_map(fn($u) => $u->id, $this->getAssignedReviewers());
 	}
 }

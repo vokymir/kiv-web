@@ -84,4 +84,12 @@ class Database
         $this->stmt->bindValue($param, $value, $type);
         return $this;
     }
+
+    public function bindBulk(array $params): self
+    {
+        foreach ($params as $param => $value) {
+            $this->bind($param, $value);
+        }
+        return $this;
+    }
 }

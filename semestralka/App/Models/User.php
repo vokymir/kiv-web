@@ -34,6 +34,35 @@ class User
 		return array_map(fn($r) => new self($r), $rows);
 	}
 
+	public static function allByRole(Role|array $roles): array
+	{
+		if ($roles instanceof Role) {
+			$roles = [$roles];
+		}
+
+		if (empty($roles)) {
+			return [];
+		}
+
+		$db = new Database();
+
+		$placeholders = [];
+		$bindParams = [];
+		foreach ($roles as $i => $role) {
+			$ph = ":role$i";
+			$placeholders[] = $ph;
+			$bindParams[$ph] = $role->value;
+		}
+
+		$sql = "SELECT * FROM users WHERE role IN (" . implode(',', $placeholders) . ") ORDER BY name";
+
+		$rows = $db->query($sql)
+			->bindBulk($bindParams)
+			->fetchAll();
+
+		return array_map(fn($r) => new self($r), $rows);
+	}
+
 	public function update(array $data): bool
 	{
 		$db = new Database();

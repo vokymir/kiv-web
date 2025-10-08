@@ -6,10 +6,12 @@ use App\Config\Config;
 use App\Core\Controller;
 use App\Models\Post;
 use App\Models\Status;
+use App\Core\Auth;
+use App\Models\Role;
+use App\Models\User;
 
 class PostController extends Controller
 {
-
 	public function posts(): void
 	{
 		$userId = $_SESSION['user']['id'] ?? null;
@@ -18,8 +20,18 @@ class PostController extends Controller
 			return;
 		}
 
-		$posts = Post::findByUser($userId);
-		self::renderView('author/posts', ['posts' => $posts]);
+		$userRole = isset($_SESSION['user']['role'])
+			? Role::from((int)$_SESSION['user']['role'])
+			: null;
+
+		if ($userRole == Role::Author) {
+
+			$posts = Post::findByUser($userId);
+			self::renderView('author/posts', ['posts' => $posts]);
+			return;
+		} else if ($userRole == Role::Admin || $userRole == Role::Superadmin) {
+			$this->admin_posts();
+		}
 	}
 
 	public function new(): void
@@ -102,5 +114,62 @@ class PostController extends Controller
 	private static function sanitize(string $input): string
 	{
 		return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+	}
+
+	public function admin_posts(): void
+	{
+		Auth::requireRole([Role::Admin, Role::Superadmin]);
+
+		$statusFilter = $_GET['status'] ?? 'all';
+		$status = Status::fromFilter($statusFilter);
+
+		$posts = Post::all($status ? [$status] : null);
+		$reviewers = User::allByRole(Role::Reviewer);
+
+		self::renderView('admin/posts', [
+			'posts' => $posts,
+			'reviewers' => $reviewers,
+			'statusFilter' => $statusFilter,
+		]);
+	}
+
+	public function admin_update(int $postId): void
+	{
+		Auth::requireRole([Role::Admin, Role::Superadmin]);
+
+		$post = Post::find($postId);
+		if (!$post) {
+			self::redirect('posts');
+		}
+
+		$action = $_POST['action'] ?? null;
+
+		if ($action === 'assign') {
+			$reviewerIds = $_POST['reviewers'] ?? [];
+			$post->assignReviewers(array_map('intval', $reviewerIds));
+		} elseif ($action === 'unassign') {
+			$reviewerIds = $_POST['remove_reviewers'] ?? [];
+			$post->removeReviewers(array_map('intval', $reviewerIds));
+		} elseif ($action === 'publish') {
+			$post->updateStatus(Status::Accepted);
+		} elseif ($action === 'reject') {
+			$post->updateStatus(Status::Rejected);
+		}
+
+		self::redirect('posts');
+	}
+
+	public function admin_delete(int $postId): void
+	{
+		Auth::requireRole([Role::Admin, Role::Superadmin]);
+
+		$post = Post::find($postId);
+		if (!$post) {
+			self::redirect('posts');
+		}
+
+		$post->delete($postId);
+
+		self::redirect('posts');
 	}
 }

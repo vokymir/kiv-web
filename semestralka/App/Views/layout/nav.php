@@ -27,6 +27,12 @@ use App\Models\Role;
 					</li>
 				<?php endif; ?>
 
+				<?php if (!empty($_SESSION['user']) && (Auth::isRole(Role::Admin) || Auth::isRole(Role::Superadmin))): ?>
+					<li class="nav-item">
+						<a class="nav-link" href="<?= Config::BASE_URL ?>posts">Posts</a>
+					</li>
+				<?php endif; ?>
+
 				<?php if (!empty($_SESSION['user']) && Auth::isRole(Role::Reviewer)): ?>
 					<li class="nav-item">
 						<a class="nav-link" href="<?= Config::BASE_URL ?>reviews">Reviews</a>
