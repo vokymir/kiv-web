@@ -177,6 +177,23 @@ class Post
 		}, $rows);
 	}
 
+
+	public static function findAccepted(): array
+	{
+		$db = new Database();
+		$rows = $db->query("
+        SELECT p.id, p.title, p.abstract, p.pathPDF, u.name AS author
+        FROM posts p
+        LEFT JOIN users u ON p.userId = u.id
+        WHERE p.status = :status
+        ORDER BY p.created_at DESC
+    ")
+			->bind(':status', Status::Accepted->value)
+			->fetchAll();
+
+		return array_map(fn($row) => new self($row), $rows);
+	}
+
 	// ===== HELPERS =====
 
 	private static function validateData(array $data): void

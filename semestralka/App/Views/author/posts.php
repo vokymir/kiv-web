@@ -4,7 +4,7 @@ use App\Config\Config;
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-	<h1>Your Papers</h1>
+	<h1>Your Posts</h1>
 	<a href="<?= Config::BASE_URL ?>posts/new" class="btn btn-success">Create New Post</a>
 </div>
 

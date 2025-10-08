@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core;
 use App\Models\User;
+use App\Models\Post;
 
 class PublicController extends Core\Controller
 {
@@ -22,8 +23,11 @@ class PublicController extends Core\Controller
 
 	public function program(): void
 	{
+		$posts = Post::findAccepted();
+
 		$data = [
 			'title' => 'program',
+			'posts' => $posts,
 		];
 
 		$this::renderView('public/program', $data);
