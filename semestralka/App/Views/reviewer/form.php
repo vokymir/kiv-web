@@ -17,8 +17,11 @@ use App\Config\Config;
 		<?php endif; ?>
 	</div>
 
-	<form method="POST" action="<?= Config::BASE_URL ?>reviews/store">
+	<form method="POST" action="<?= Config::BASE_URL ?><?= $isEdit ? "reviews/update" : "reviews/store" ?>">
 		<input type="hidden" name="postId" value="<?= htmlspecialchars($post->id) ?>">
+		<?php if ($isEdit): ?>
+			<input type="hidden" name="reviewId" value="<?= htmlspecialchars($review->id) ?>">
+		<?php endif; ?>
 
 		<div class="row mb-3">
 			<div class="col-md-4">
