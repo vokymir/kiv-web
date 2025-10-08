@@ -144,16 +144,32 @@ class PostController extends Controller
 
 		$action = $_POST['action'] ?? null;
 
-		if ($action === 'assign') {
-			$reviewerIds = $_POST['reviewers'] ?? [];
-			$post->assignReviewers(array_map('intval', $reviewerIds));
-		} elseif ($action === 'unassign') {
-			$reviewerIds = $_POST['remove_reviewers'] ?? [];
-			$post->removeReviewers(array_map('intval', $reviewerIds));
-		} elseif ($action === 'publish') {
-			$post->updateStatus(Status::Accepted);
-		} elseif ($action === 'reject') {
-			$post->updateStatus(Status::Rejected);
+		switch ($action) {
+			case 'assign':
+				$reviewerIds = $_POST['reviewers'] ?? [];
+				$post->assignReviewers(array_map('intval', $reviewerIds));
+				break;
+
+			case 'unassign':
+				$reviewerIds = $_POST['remove_reviewers'] ?? [];
+				$post->removeReviewers(array_map('intval', $reviewerIds));
+				break;
+
+			case 'publish':
+			case 'reject':
+				// Get count of reviews for this post
+				$reviewCount = count($post->getReviews() ?? []);
+
+				if ($reviewCount < 3) {
+					// Option 1: store message in session for feedback
+					$_SESSION['error'] = "Cannot $action post — at least 3 reviews are required.";
+					self::redirect('posts');
+					return;
+				}
+
+				$newStatus = $action === 'publish' ? Status::Accepted : Status::Rejected;
+				$post->updateStatus($newStatus);
+				break;
 		}
 
 		self::redirect('posts');

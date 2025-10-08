@@ -65,35 +65,38 @@ use App\Models\User;
 							<a href="<?= Config::BASE_URL ?>download/pdf/<?= $post->pathPDF ?>" target="_blank" class="btn btn-primary mb-3">Download PDF</a>
 						<?php endif; ?>
 
-						<!-- Assign reviewers -->
-						<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update" class="mb-3">
-							<div class="row g-2 mb-3">
-								<?php
-								$assignedIds = $post->getAssignedReviewerIds();
-								$unassignedReviewers = array_filter($reviewers, fn($r) => !in_array($r->id, $assignedIds));
-								$assignedReviewers = array_filter($reviewers, fn($r) => in_array($r->id, $assignedIds));
-								?>
-								<div class="col-md-6">
-									<label class="form-label">Assign Reviewers</label>
-									<select name="reviewers[]" class="form-select" multiple>
-										<?php foreach ($unassignedReviewers as $rev): ?>
-											<option value="<?= $rev->id ?>"><?= htmlspecialchars($rev->name) ?></option>
-										<?php endforeach; ?>
-									</select>
-									<button type="submit" name="action" value="assign" class="btn btn-sm btn-primary mt-2">Assign Selected</button>
-								</div>
+						<!-- Assign reviewers (only if not published or rejected) -->
+						<?php if ($post->status !== Status::Accepted && $post->status !== Status::Rejected): ?>
+							<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update" class="mb-3">
+								<div class="row g-2 mb-3">
+									<?php
+									$assignedIds = $post->getAssignedReviewerIds();
+									$unassignedReviewers = array_filter($reviewers, fn($r) => !in_array($r->id, $assignedIds));
+									$assignedReviewers = array_filter($reviewers, fn($r) => in_array($r->id, $assignedIds));
+									?>
+									<div class="col-md-6">
+										<label class="form-label">Assign Reviewers</label>
+										<select name="reviewers[]" class="form-select" multiple>
+											<?php foreach ($unassignedReviewers as $rev): ?>
+												<option value="<?= $rev->id ?>"><?= htmlspecialchars($rev->name) ?></option>
+											<?php endforeach; ?>
+										</select>
+										<button type="submit" name="action" value="assign" class="btn btn-sm btn-primary mt-2">Assign Selected</button>
+									</div>
 
-								<div class="col-md-6">
-									<label class="form-label">Currently Assigned</label>
-									<select name="remove_reviewers[]" class="form-select" multiple>
-										<?php foreach ($assignedReviewers as $rev): ?>
-											<option value="<?= $rev->id ?>"><?= htmlspecialchars($rev->name) ?></option>
-										<?php endforeach; ?>
-									</select>
-									<button type="submit" name="action" value="unassign" class="btn btn-sm btn-danger mt-2">Unassign Selected</button>
+									<div class="col-md-6">
+										<label class="form-label">Currently Assigned</label>
+										<select name="remove_reviewers[]" class="form-select" multiple>
+											<?php foreach ($assignedReviewers as $rev): ?>
+												<option value="<?= $rev->id ?>"><?= htmlspecialchars($rev->name) ?></option>
+											<?php endforeach; ?>
+										</select>
+										<button type="submit" name="action" value="unassign" class="btn btn-sm btn-danger mt-2">Unassign Selected</button>
+									</div>
 								</div>
-							</div>
-						</form>
+							</form>
+						<?php endif; ?>
+
 						<!-- Reviews -->
 						<h5>Reviews</h5>
 						<?php $reviews = $post->getReviews(); ?>
@@ -123,17 +126,48 @@ use App\Models\User;
 							<p class="text-muted">No reviews yet.</p>
 						<?php endif; ?>
 
-						<!-- Publish / Reject / Delete buttons at the very end -->
+						<!-- Publish / Reject / Delete buttons -->
+						<?php $reviewCount = count($reviews ?? []); ?>
 						<div class="mt-3 d-flex gap-2 flex-wrap">
-							<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update">
-								<button type="submit" name="action" value="publish" class="btn btn-success btn-sm">Publish</button>
-							</form>
-							<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update">
-								<button type="submit" name="action" value="reject" class="btn btn-warning btn-sm">Reject</button>
-							</form>
-							<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete" class="btn btn-danger btn-sm" onclick="return confirm('Delete this post?')">Delete</a>
-						</div>
 
+							<?php if ($post->status === Status::Accepted): ?>
+								<!-- Published: only reject & delete -->
+								<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update">
+									<button type="submit" name="action" value="reject" class="btn btn-warning btn-sm"
+										<?= $reviewCount < 3 ? 'disabled' : '' ?>>
+										Reject
+									</button>
+								</form>
+								<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete"
+									class="btn btn-danger btn-sm"
+									onclick="return confirm('Delete this post?')">Delete</a>
+
+							<?php elseif ($post->status === Status::Rejected): ?>
+								<!-- Rejected: only delete -->
+								<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete"
+									class="btn btn-danger btn-sm"
+									onclick="return confirm('Delete this post?')">Delete</a>
+
+							<?php else: ?>
+								<!-- In review or draft: show all three -->
+								<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update">
+									<button type="submit" name="action" value="publish" class="btn btn-success btn-sm"
+										<?= $reviewCount < 3 ? 'disabled' : '' ?>>
+										Publish
+									</button>
+								</form>
+								<form method="post" action="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/update">
+									<button type="submit" name="action" value="reject" class="btn btn-warning btn-sm"
+										<?= $reviewCount < 3 ? 'disabled' : '' ?>>
+										Reject
+									</button>
+								</form>
+								<a href="<?= Config::BASE_URL ?>posts/<?= $post->id ?>/delete"
+									class="btn btn-danger btn-sm"
+									onclick="return confirm('Delete this post?')">Delete</a>
+							<?php endif; ?>
+
+						</div>
 					</div>
 				</div>
 			</div>
