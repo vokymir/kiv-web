@@ -3,12 +3,14 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Flash;
 use App\Models\Post;
 use App\Models\Review;
 use App\Models\Role;
 
 class ReviewController extends Controller
 {
+	// show all posts assigned to logged in reviewer
 	public function posts(): void
 	{
 		$userId = $_SESSION['user']['id'];
@@ -16,13 +18,14 @@ class ReviewController extends Controller
 		self::renderView('reviewer/posts', ['assignedPosts' => $posts]);
 	}
 
+	// show form for NEW/EDIT review
 	public function create(int $postId): void
 	{
-		// for safety
+		// for safety look if already exist
 		$post = Post::find($postId);
 		$review = Review::findByPostAndUser($postId, $_SESSION['user']['id']);
 
-		$isEdit = $review !== null;
+		$isEdit = $review !== null; // if already exist, isEdit = true
 
 		self::renderView('reviewer/form', [
 			'post' => $post,
@@ -31,28 +34,32 @@ class ReviewController extends Controller
 		]);
 	}
 
+	// try deleting review
 	public function delete(int $id): void
 	{
 		$review = Review::findById($id);
 		if (!$review) {
-			$this->redirect('/reviews');
+			Flash::set('error', 'Cannot delete non-existing review.');
+			$this->redirect('reviews');
 			return;
 		}
 
 		if ($review->userId !== $_SESSION['user']['id']) {
 			http_response_code(403);
-			echo "Forbidden: you cannot delete someone else's review.";
+			Flash::set('error', "Forbidden: you cannot delete someone else's review.");
+			$this->redirect('reviews');
 			return;
 		}
 
 		if (Review::deleteById($id)) {
-			$this->redirect('reviews');
+			Flash::set('success', 'Review successfully deleted.');
 		} else {
-			echo "Error deleting review.";
+			Flash::set('error', "Error deleting review.");
 		}
+		$this->redirect('reviews');
 	}
 
-
+	// render form for edit review - shortcut compared to create, because we know it already exists
 	public function edit(int $reviewId): void
 	{
 		$review = Review::findById($reviewId);
@@ -67,6 +74,7 @@ class ReviewController extends Controller
 		]);
 	}
 
+	// prevent SQL inject
 	function sanitizeReviewNote(string $html): string
 	{
 		// allow only some tags
@@ -74,11 +82,11 @@ class ReviewController extends Controller
 		return strip_tags($html, $allowedTags);
 	}
 
-	// used in routes
+	// store results from NEW/EDIT review in DB
 	public function store(): void
 	{
-		// ensure user is logged in
 		if (!isset($_SESSION['user'])) {
+			Flash::set('warning', 'Please login to continue.');
 			self::redirect('login');
 			return;
 		}
@@ -87,8 +95,9 @@ class ReviewController extends Controller
 
 		// allow only reviewers
 		if ((int)$user['role'] !== Role::Reviewer->value) {
+			Flash::set('error', "Forbidden: only reviewers can submit reviews.");
 			http_response_code(403);
-			echo "Forbidden: only reviewers can submit reviews.";
+			self::redirect('reviews');
 			exit;
 		}
 

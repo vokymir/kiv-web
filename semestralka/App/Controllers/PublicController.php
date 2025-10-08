@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Config\Config;
 use App\Core\Controller;
 use App\Models\User;
 use App\Models\Post;
