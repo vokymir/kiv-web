@@ -8,6 +8,7 @@ use PDOStatement;
 use App\Config\Config;
 use App\Models\Status;
 
+// to access the DB
 class Database
 {
     private string $host = Config::DB_HOST;
@@ -37,30 +38,38 @@ class Database
         }
     }
 
-    public function query(string $sql): Database
+    // prepare a SQL query in handler
+    // return self to concat methods
+    public function query(string $sql): self
     {
         $this->stmt = $this->dbh->prepare($sql);
         return $this;
     }
 
+    // execute SQL query prepared by calling 'self->query' before
+    // return bool if is success
     public function execute(): bool
     {
         return $this->stmt->execute();
     }
 
+    // fetch first element in DB
     public function fetchFirst(): mixed
     {
         $this->execute();
         return $this->stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // fetch all from DB
     public function fetchAll(): array
     {
         $this->execute();
         return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function bind(string $param, mixed $value, mixed $type = null): Database
+    // bind a variable to query parameter
+    // return self to concat methods
+    public function bind(string $param, mixed $value, mixed $type = null): self
     {
         if (is_null($type)) {
             switch (true) {
@@ -85,6 +94,9 @@ class Database
         return $this;
     }
 
+    // bind more variables to query parameters
+    // return self to concat methods
+    // @param array<string, mixed> $params Associative array of parameter names and values
     public function bindBulk(array $params): self
     {
         foreach ($params as $param => $value) {

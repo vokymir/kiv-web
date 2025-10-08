@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+// is used to MANAGE the app and call the right controller and method
 class App
 {
 	private $router;
@@ -13,6 +14,7 @@ class App
 		$this->dispatcher = $dispatcher;
 	}
 
+	// find the right controller and method and call them
 	public function run(): void
 	{
 		$urlParts = $this->parseUrl();
@@ -34,6 +36,8 @@ class App
 		);
 	}
 
+	// parse url into array
+	/** @return string[] */
 	private function parseUrl(): array
 	{
 		if (isset($_GET['url'])) {

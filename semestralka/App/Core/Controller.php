@@ -4,20 +4,20 @@ namespace App\Core;
 
 use App\Config\Config;
 
+// base class for all controllers, have common logic
 class Controller
 {
-	protected function loadModel(string $model): mixed
-	{
-		require_once __DIR__ . '/../Models/' . $model . '.php';
-		return new $model;
-	}
-
+	// render a view specified with path
+	// if view requieres any data, pass them in 'set'
+	// if using another layout than 'main', pass that in
+	// @param array<string, mixed> $data
 	public static function renderView(string $viewPath, array $data = [], string $layoutPath = "main"): void
 	{
 		$view = new View($data);
 		$view->render($viewPath, $layoutPath);
 	}
 
+	// redirect to another page. SAFE
 	public static function redirect(string $url): void
 	{
 		// remove trailing slashes

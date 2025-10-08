@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+// store all possible routes
 class Router
 {
 	private $routes = [];
@@ -9,12 +10,6 @@ class Router
 	/*
 	* Add route and appropriate controller and its method.
 	* Allows for the same URL with different HTTP request methods.
-	*
-	* @param string $url
-	* @param string $controller
-	* @param string $methodName
-	* @param string $httpMethod
-	* @return void
 	*/
 	public function add(string $url, string $controller, string $methodName, string $httpMethod = 'GET'): void
 	{
@@ -27,12 +22,8 @@ class Router
 
 	/*
 	* Shorthand for adding route with GET HTTP request method.
-	*
-	* @param string $url
-	* @param string $controllerMethod controller@method
-	* @return void
 	*/
-	public function get($url, $controllerMethod): void
+	public function get(string $url, string $controllerMethod): void
 	{
 		[$controller, $method] = explode('@', $controllerMethod);
 		$this->add($url, $controller, $method, 'GET');
@@ -40,20 +31,19 @@ class Router
 
 	/*
 	* Shorthand for adding route with GET POST request method.
-	*
-	* @param string $url
-	* @param string $controllerMethod controller@method
-	* @return void
 	*/
-	public function post($url, $controllerMethod): void
+	public function post(string $url, string $controllerMethod): void
 	{
 		[$controller, $method] = explode('@', $controllerMethod);
 		$this->add($url, $controller, $method, 'POST');
 	}
 
-	/*
-	*
-	*/
+	/**
+	 * Match a URL against the registered routes.
+	 *
+	 * @param array<int, string> $urlParts Parts of the URL to match
+	 * @return array{controller: string, method: string, params: array<string, string|null>}|null
+	 */
 	public function match(array $urlParts): ?array
 	{
 		$urlStr = implode('/', array_filter($urlParts));

@@ -2,8 +2,11 @@
 
 namespace App\Core;
 
+// dispatch controller and method from url
 class Dispatcher
 {
+	// call the specified method of the specified controller with the specified params
+	// @param array<int|string, mixed> $params Parameters to pass to the method
 	public function dispatch(string $controllerName, string $method, array $params): mixed
 	{
 		$class = "App\\Controllers\\{$controllerName}";

@@ -2,8 +2,11 @@
 
 namespace App\Core;
 
+// Displaying messages
+// (in layout/main.php on top is Flash::get(), in controllers are Flash::set())
 class Flash
 {
+	// set message to be shown
 	public static function set(string $type, string $message): void
 	{
 		if (!isset($_SESSION)) {
@@ -16,6 +19,7 @@ class Flash
 		];
 	}
 
+	// get message to be shown
 	public static function get(): ?array
 	{
 		if (!isset($_SESSION)) {
