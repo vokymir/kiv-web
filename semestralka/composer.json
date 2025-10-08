@@ -14,5 +14,7 @@
             "email": "22869857+vokymir@users.noreply.github.com"
         }
     ],
-    "require": {}
+    "require": {
+        "mpdf/mpdf": "^6.1"
+    }
 }
