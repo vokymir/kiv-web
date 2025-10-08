@@ -12,27 +12,29 @@ use App\Models\Post;
 		<?php foreach ($posts as $index => $post): ?>
 			<div class="accordion-item">
 				<h2 class="accordion-header" id="heading<?= $post->id ?>">
-					<button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?>"
+					<button class="accordion-button collapsed"
 						type="button" data-bs-toggle="collapse"
 						data-bs-target="#collapse<?= $post->id ?>"
 						aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>">
-						<span class="text-muted"><?= htmlspecialchars($post->author ?? 'Anonymous') ?>:&nbsp;</span>
-						<?= htmlspecialchars($post->title) ?>
 
-						<?php
-						$rating = $post->rating() ?? 1;
-						$fullStars = $rating;
-						$emptyStars = 5 - $fullStars;
-						?>
+						<div class="w-100 d-flex align-items-center me-2">
+							<span class="text-muted"><?= htmlspecialchars($post->author ?? 'Anonymous') ?>:&nbsp;</span>
+							<span><?= htmlspecialchars($post->title) ?></span>
 
-						<span class="ms-auto">
-							<?php for ($i = 0; $i < $fullStars; $i++): ?>
-								⭐
-							<?php endfor; ?>
-							<?php for ($i = 0; $i < $emptyStars; $i++): ?>
-								☆
-							<?php endfor; ?>
-						</span>
+							<?php
+							$rating = $post->rating() ?? 1;
+							$fullStars = $rating;
+							$emptyStars = 5 - $fullStars;
+							?>
+							<span class="ms-auto d-flex align-items-center">
+								<?php for ($i = 0; $i < $fullStars; $i++): ?>
+									<span class="text-warning">⭐</span>
+								<?php endfor; ?>
+								<?php for ($i = 0; $i < $emptyStars; $i++): ?>
+									<span class="text-secondary">☆</span>
+								<?php endfor; ?>
+							</span>
+						</div>
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>" class="accordion-collapse collapse">

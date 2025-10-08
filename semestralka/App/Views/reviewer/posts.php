@@ -12,7 +12,7 @@ use App\Config\Config;
 		<?php foreach ($assignedPosts as $index => $post): ?>
 			<div class="accordion-item">
 				<h2 class="accordion-header" id="heading<?= $post->id ?>">
-					<button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?>"
+					<button class="accordion-button collapsed"
 						type="button" data-bs-toggle="collapse"
 						data-bs-target="#collapse<?= $post->id ?>"
 						aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>"
