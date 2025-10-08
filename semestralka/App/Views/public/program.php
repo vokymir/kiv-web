@@ -35,7 +35,7 @@ use App\Models\Post;
 						</span>
 					</button>
 				</h2>
-				<div id="collapse<?= $post->id ?>" class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>">
+				<div id="collapse<?= $post->id ?>" class="accordion-collapse collapse">
 					<div class="accordion-body">
 						<p><?= nl2br(htmlspecialchars($post->abstract)) ?></p>
 						<?php if (!empty($post->pathPDF)): ?>

@@ -19,10 +19,15 @@ use App\Config\Config;
 						aria-controls="collapse<?= $post->id ?>">
 						<?= htmlspecialchars($post->title) ?>
 						<span class="text-muted ms-2">(Author: <?= htmlspecialchars($post->author ?? 'Unknown') ?>)</span>
+						<?php if (!empty($post->review)): ?>
+							<span class="badge bg-success ms-2">Reviewed</span>
+						<?php else: ?>
+							<span class="badge bg-secondary ms-2">Not Reviewed</span>
+						<?php endif; ?>
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>"
-					class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>"
+					class="accordion-collapse collapse "
 					aria-labelledby="heading<?= $post->id ?>"
 					data-bs-parent="#reviewerPostsAccordion">
 					<div class="accordion-body">

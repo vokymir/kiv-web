@@ -38,7 +38,7 @@ use App\Models\User;
 				</h2>
 
 				<div id="collapse<?= $post->id ?>"
-					class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>"
+					class="accordion-collapse collapse"
 					aria-labelledby="heading<?= $post->id ?>"
 					data-bs-parent="#postsAccordion">
 					<div class="accordion-body">

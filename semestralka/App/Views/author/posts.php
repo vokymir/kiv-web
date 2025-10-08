@@ -23,7 +23,7 @@ use App\Config\Config;
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>"
-					class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>"
+					class="accordion-collapse collapse"
 					aria-labelledby="heading<?= $post->id ?>"
 					data-bs-parent="#userPostsAccordion">
 					<div class="accordion-body">
