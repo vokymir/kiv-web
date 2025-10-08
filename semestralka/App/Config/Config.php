@@ -13,7 +13,7 @@ class Config
 	public const UPLOAD_DIR =  __DIR__ . '/../../uploads/';
 
 	public const VIEW_DATA = [
-		"sitename" => "Epic Conference",
-		"defaultTitle" => "welcome",
+		"sitename" => "The Flat Earth Society Conference",
+		"defaultTitle" => "Don't fall over",
 	];
 }
