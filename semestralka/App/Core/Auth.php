@@ -13,7 +13,7 @@ class Auth
 			->bind(':un', $username)
 			->fetchFirst();
 
-		if ($user && password_verify($password, $user['passwordHash'])) {
+		if ($user && !$user['blocked'] && password_verify($password, $user['passwordHash'])) {
 			self::login($user);
 			return $user;
 		}
@@ -78,9 +78,11 @@ class Auth
 		return $u['role'] === $role->value;
 	}
 
-	public static function requireRole(Role $role): void
+	public static function requireRole(Role|array $roles): void
 	{
-		if (!self::loggedIn() || !self::isRole($role)) {
+		$roles = is_array($roles) ? $roles : [$roles];
+
+		if (!self::loggedIn() || !in_array($_SESSION['user']['role'], array_map(fn($r) => $r->value, $roles), true)) {
 			http_response_code(403);
 			echo 'Forbidden';
 			exit;

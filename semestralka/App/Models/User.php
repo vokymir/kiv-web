@@ -15,9 +15,59 @@ class User
 	public string $name;
 	public string $passwordHash;
 
+	public function __construct(array $data = [])
+	{
+		if ($data) {
+			$this->id = (int)($data['id'] ?? 0);
+			$this->name = $data['name'] ?? '';
+			$this->role = Role::tryFrom((int)($data['role'] ?? Role::Author->value)) ?? Role::Author;
+			$this->blocked = (bool)($data['blocked'] ?? false);
+		}
+	}
+
 	// ===== CRUD =====
 
+	public static function all(): array
+	{
+		$db = new Database();
+		$rows = $db->query("SELECT * FROM users ORDER BY name")->fetchAll();
+		return array_map(fn($r) => new self($r), $rows);
+	}
+
+	public function update(array $data): bool
+	{
+		$db = new Database();
+		return $db->query("
+			UPDATE users
+			SET role = :role, blocked = :blocked
+			WHERE id = :id
+		")
+			->bind(':id', $this->id)
+			->bind(':role', $data['role'])
+			->bind(':blocked', $data['blocked'])
+			->execute();
+	}
+
+	public function delete(): bool
+	{
+		$db = new Database();
+		return $db->query("DELETE FROM users WHERE id = :id")
+			->bind(':id', $this->id)
+			->execute();
+	}
+
 	// ===== FINDs =====
+
+	public static function find(int $id): ?self
+	{
+		$db = new Database();
+		$row = $db->query("SELECT * FROM users WHERE id = :id")
+			->bind(':id', $id)
+			->fetchFirst();
+
+		return $row ? new self($row) : null;
+	}
+
 	public static function getRandomSpeakers(int $limit = 3): array
 	{
 		$db = new Database();
