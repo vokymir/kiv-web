@@ -16,6 +16,7 @@ class Review
 	public string $ratingNote = '';
 	public DateTime $createdAt;
 
+	// @param array<string, mixed> $data
 	public function __construct(array $data = [])
 	{
 		if ($data) {
@@ -34,13 +35,15 @@ class Review
 
 	// ===== CRUD =====
 
+	// from data construct new review
+	// @param array $data<string, mixed>
 	public static function create(array $data): bool
 	{
 		$db = new Database();
 		return $db->query("
-		INSERT INTO reviews (postId, userId, ratingInteresting, ratingImportant, ratingInovative, ratingNote)
-		VALUES (:postId, :userId, :ratingInteresting, :ratingImportant, :ratingInovative, :ratingNote)
-	")
+			INSERT INTO reviews (postId, userId, ratingInteresting, ratingImportant, ratingInovative, ratingNote)
+			VALUES (:postId, :userId, :ratingInteresting, :ratingImportant, :ratingInovative, :ratingNote)
+		")
 			->bind(':postId', $data['postId'])
 			->bind(':userId', $data['userId'])
 			->bind(':ratingInteresting', $data['ratingInteresting'])
@@ -50,17 +53,19 @@ class Review
 			->execute();
 	}
 
+	// update any review, rewrite all data
+	// @param array<string, mixed> $data
 	public static function update(int $reviewId, array $data): bool
 	{
 		$db = new Database();
 		return $db->query("
-		UPDATE reviews SET
-			ratingInteresting = :ratingInteresting,
-			ratingImportant = :ratingImportant,
-			ratingInovative = :ratingInovative,
-			ratingNote = :ratingNote
-		WHERE id = :id
-	")
+			UPDATE reviews SET
+				ratingInteresting = :ratingInteresting,
+				ratingImportant = :ratingImportant,
+				ratingInovative = :ratingInovative,
+				ratingNote = :ratingNote
+			WHERE id = :id
+		")
 			->bind(':ratingInteresting', $data['ratingInteresting'])
 			->bind(':ratingImportant', $data['ratingImportant'])
 			->bind(':ratingInovative', $data['ratingInovative'])
@@ -77,7 +82,7 @@ class Review
 			->execute();
 	}
 
-	// ===== FINDs =====
+	// ===== FINDERS =====
 
 	public static function findById(int $reviewId): ?Review
 	{
@@ -89,17 +94,18 @@ class Review
 		return $row ? new self($row) : null;
 	}
 
+	// find review from specific user for specific post
+	// if not found, returns null
 	public static function findByPostAndUser(int $postId, int $userId): ?Review
 	{
 		$db = new Database();
-
 		$row = $db->query("
-        SELECT r.*
-        FROM reviews r
-        WHERE r.postId = :postId
-          AND r.userId = :userId
-        LIMIT 1
-    ")
+			SELECT r.*
+			FROM reviews r
+			WHERE r.postId = :postId
+			  AND r.userId = :userId
+			LIMIT 1
+		")
 			->bind(':postId', $postId)
 			->bind(':userId', $userId)
 			->fetchFirst();

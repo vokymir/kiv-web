@@ -18,11 +18,14 @@ class Post
 
 	public Status $status;
 	public DateTime $createdAt;
+	// these are not saved in DB, but are good for storing related data
 	public ?string $author = null;
 	public ?Review $review = null;
 	public ?array $reviews = null;
 	public ?array $assignedReviewers = null;
 
+	// Constructor from row
+	// @param array<string, mixed> $data row from DB
 	public function __construct(array $data = [])
 	{
 		if ($data) {
@@ -32,7 +35,7 @@ class Post
 			$this->abstract = $data['abstract'] ?? '';
 			$this->pathPDF = $data['pathPDF'] ?? '';
 			$this->status = Status::tryFrom((int)($data['status'] ?? 0)) ?? Status::PendingReview;
-			$this->author   = $data['author'] ?? null;
+			$this->author = $data['author'] ?? null;
 			$this->createdAt = isset($data['created_at'])
 				? new DateTime($data['created_at'])
 				: new DateTime();
@@ -41,17 +44,18 @@ class Post
 
 	// ===== CRUD =====
 
+	// return all posts, optionally filtered by statuses
+	// @param array<Status|int>|null $statuses
+	// @return array<Post>
 	public static function all(?array $statuses = null): array
 	{
 		$db = new Database();
 
 		$sql = "
-        SELECT 
-            p.*, 
-            u.username AS authorName
-        FROM posts p
-        LEFT JOIN users u ON p.userId = u.id
-    ";
+			SELECT p.*, u.username AS authorName
+			FROM posts p
+			LEFT JOIN users u ON p.userId = u.id
+		";
 
 		$bindParams = [];
 
@@ -67,13 +71,9 @@ class Post
 
 		$sql .= " ORDER BY p.created_at DESC";
 
-		$rows = $db->query($sql)
-			->bindBulk($bindParams)
-			->fetchAll();
-
+		$rows = $db->query($sql)->bindBulk($bindParams)->fetchAll();
 		$posts = array_map(fn($row) => new self($row), $rows);
 
-		// Attach reviews and assigned reviewers for each post
 		foreach ($posts as $post) {
 			$post->assignedReviewers = $post->getAssignedReviewers();
 			$post->reviews = $post->getReviews();
@@ -82,6 +82,9 @@ class Post
 		return $posts;
 	}
 
+	// Create a new post
+	// @param array<string, mixed> $data
+	// @param array<string, mixed> $file
 	public function create(array $data, array $file = []): bool
 	{
 		self::validateData($data);
@@ -104,10 +107,14 @@ class Post
 			->execute();
 	}
 
+	// Update post data
+	// @param array<string, mixed> $data
+	// @param array<string, mixed> $file
 	public function update(int $postId, array $data, array $file = []): bool
 	{
 		self::validateData($data);
 
+		// check PDF, optionally delete old if is new
 		$pdfName = $this->getPdfFilename($postId);
 		if (!empty($file['tmp_name'])) {
 			if ($pdfName && file_exists(Config::UPLOAD_DIR . $pdfName)) {
@@ -133,17 +140,7 @@ class Post
 			->execute();
 	}
 
-
-	public function updateStatus(Status $status): bool
-	{
-		$db = new Database();
-		$this->status = $status;
-		return $db->query("UPDATE posts SET status = :status WHERE id = :pid")
-			->bind(':status', $status->value)
-			->bind(':pid', $this->id)
-			->execute();
-	}
-
+	// Delete post and related records
 	public function delete(int $postId): bool
 	{
 		$filename = $this->getPdfFilename($postId);
@@ -169,42 +166,20 @@ class Post
 			->execute();
 	}
 
-	/// === sorta ===
-
-	public function assignReviewers(array $reviewerIds): bool
+	// Update status for specific post
+	public function updateStatus(Status $status): bool
 	{
 		$db = new Database();
-		$current = $this->getAssignedReviewerIds();
-
-		$toAdd = array_diff($reviewerIds, $current);
-		foreach ($toAdd as $uid) {
-			$db->query("INSERT INTO post_reviewer (postId, userId) VALUES (:pid, :uid)")
-				->bind(':pid', $this->id)
-				->bind(':uid', $uid)
-				->execute();
-		}
-
-		return true;
-	}
-
-	public function removeReviewers(array $reviewerIds): bool
-	{
-		$db = new Database();
-		$current = $this->getAssignedReviewerIds();
-
-		$toRemove = array_intersect($current, $reviewerIds);
-		foreach ($toRemove as $uid) {
-			$db->query("DELETE FROM post_reviewer WHERE postId = :pid AND userId = :uid")
-				->bind(':pid', $this->id)
-				->bind(':uid', $uid)
-				->execute();
-		}
-
-		return true;
+		$this->status = $status;
+		return $db->query("UPDATE posts SET status = :status WHERE id = :pid")
+			->bind(':status', $status->value)
+			->bind(':pid', $this->id)
+			->execute();
 	}
 
 	// ===== FIND =====
 
+	// find post by its ID
 	public static function find(int $postId): ?Post
 	{
 		$db = new Database();
@@ -214,13 +189,13 @@ class Post
 			JOIN users u ON u.id = p.userId
 			WHERE p.id = :id
 			LIMIT 1
-		")
-			->bind(':id', $postId)
-			->fetchFirst();
+		")->bind(':id', $postId)->fetchFirst();
 
 		return $row ? new self($row) : null;
 	}
 
+	// find post by its author ID
+	/** @return array<Post> */
 	public static function findByUser(int $userId): array
 	{
 		$db = new Database();
@@ -230,13 +205,13 @@ class Post
 			LEFT JOIN users u ON p.userId = u.id
 			WHERE p.userId = :uid
 			ORDER BY p.created_at DESC
-		")
-			->bind(':uid', $userId)
-			->fetchAll();
+		")->bind(':uid', $userId)->fetchAll();
 
 		return array_map(fn($r) => new self($r), $rows);
 	}
 
+	// find all posts assigned to one reviewer
+	/** @return array<Post> */
 	public static function findAssignedToReviewer(int $userId): array
 	{
 		$db = new Database();
@@ -252,9 +227,7 @@ class Post
 			WHERE pr.userId = :uid
 			  AND p.status = 10
 			ORDER BY p.created_at DESC
-		")
-			->bind(':uid', $userId)
-			->fetchAll();
+		")->bind(':uid', $userId)->fetchAll();
 
 		return array_map(function ($row) {
 			$post = new self($row);
@@ -274,25 +247,62 @@ class Post
 		}, $rows);
 	}
 
-
+	// find all posts which are status == accepted
+	/** @return array<Post> */
 	public static function findAccepted(): array
 	{
 		$db = new Database();
 		$rows = $db->query("
-        SELECT p.id, p.title, p.abstract, p.pathPDF, u.name AS author
-        FROM posts p
-        LEFT JOIN users u ON p.userId = u.id
-        WHERE p.status = :status
-        ORDER BY p.created_at DESC
-    ")
-			->bind(':status', Status::Accepted->value)
-			->fetchAll();
+			SELECT p.id, p.title, p.abstract, p.pathPDF, u.name AS author
+			FROM posts p
+			LEFT JOIN users u ON p.userId = u.id
+			WHERE p.status = :status
+			ORDER BY p.created_at DESC
+		")->bind(':status', Status::Accepted->value)->fetchAll();
 
 		return array_map(fn($row) => new self($row), $rows);
 	}
 
+	// ===== REVIEWER ASSIGNMENT =====
+
+	// add new reviewers to post by their IDs
+	/** @param array<int> $reviewerIds */
+	public function assignReviewers(array $reviewerIds): bool
+	{
+		$db = new Database();
+		$current = $this->getAssignedReviewerIds();
+
+		$toAdd = array_diff($reviewerIds, $current);
+		foreach ($toAdd as $uid) {
+			$db->query("INSERT INTO post_reviewer (postId, userId) VALUES (:pid, :uid)")
+				->bind(':pid', $this->id)
+				->bind(':uid', $uid)
+				->execute();
+		}
+		return true;
+	}
+
+	// remove reviewers from post by their IDs
+	/** @param array<int> $reviewerIds */
+	public function removeReviewers(array $reviewerIds): bool
+	{
+		$db = new Database();
+		$current = $this->getAssignedReviewerIds();
+
+		$toRemove = array_intersect($current, $reviewerIds);
+		foreach ($toRemove as $uid) {
+			$db->query("DELETE FROM post_reviewer WHERE postId = :pid AND userId = :uid")
+				->bind(':pid', $this->id)
+				->bind(':uid', $uid)
+				->execute();
+		}
+		return true;
+	}
+
 	// ===== HELPERS =====
 
+	// Validate title and abstract
+	// @param array<string, mixed> $data
 	private static function validateData(array $data): void
 	{
 		if (empty($data['title']) || empty($data['abstract'])) {
@@ -303,6 +313,8 @@ class Post
 		}
 	}
 
+	// Upload PDF and return filename
+	// @param array<string, mixed> $file
 	private function uploadPdf(array $file): string
 	{
 		$uploadDir = rtrim(Config::UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
@@ -315,6 +327,7 @@ class Post
 			throw new \InvalidArgumentException("Only PDF files are allowed.");
 		}
 
+		// safe name, also not identical because of time
 		$originalName = pathinfo($file['name'], PATHINFO_FILENAME);
 		$safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
 		$filename = time() . '_' . $safeName . '.pdf';
@@ -327,6 +340,7 @@ class Post
 		return $filename;
 	}
 
+	// Get stored PDF filename
 	private function getPdfFilename(int $postId): string
 	{
 		$db = new Database();
@@ -337,11 +351,14 @@ class Post
 		return $row['pathPDF'] ?? '';
 	}
 
+	// ===== STATUS / META =====
+
 	public function isStatus(Status $status): bool
 	{
 		return $this->status === $status;
 	}
 
+	// user can only edit if post is in review process
 	public function canEdit(): bool
 	{
 		return $this->isStatus(Status::PendingReview);
@@ -352,6 +369,9 @@ class Post
 		return $this->status->label();
 	}
 
+	// ===== REVIEWS =====
+
+	// Average rating of all reviews
 	public function rating(): int
 	{
 		$db = new Database();
@@ -359,9 +379,7 @@ class Post
 			SELECT ratingInteresting, ratingImportant, ratingInovative
 			FROM reviews
 			WHERE postId = :pid
-		")
-			->bind(':pid', $this->id)
-			->fetchAll();
+		")->bind(':pid', $this->id)->fetchAll();
 
 		if (!$rows) {
 			return 0;
@@ -371,27 +389,26 @@ class Post
 		foreach ($rows as $r) {
 			$sum += ($r['ratingInteresting'] + $r['ratingImportant'] + $r['ratingInovative']) / 3;
 		}
-
 		return (int)round($sum / count($rows));
 	}
 
+	// get all reviews for one specific post
+	/** @return array<array<string,mixed>> */
 	public function getReviews(): array
 	{
 		$db = new Database();
 		$rows = $db->query("
-		SELECT 
-			r.ratingInteresting,
-			r.ratingImportant,
-			r.ratingInovative,
-			r.ratingNote,
-			u.name AS reviewerName
-		FROM reviews r
-		JOIN users u ON r.userId = u.id
-		WHERE r.postId = :pid
-		ORDER BY u.name
-	")
-			->bind(':pid', $this->id)
-			->fetchAll();
+			SELECT 
+				r.ratingInteresting,
+				r.ratingImportant,
+				r.ratingInovative,
+				r.ratingNote,
+				u.name AS reviewerName
+			FROM reviews r
+			JOIN users u ON r.userId = u.id
+			WHERE r.postId = :pid
+			ORDER BY u.name
+		")->bind(':pid', $this->id)->fetchAll();
 
 		return array_map(function ($r) {
 			$avg = round(($r['ratingInteresting'] + $r['ratingImportant'] + $r['ratingInovative']) / 3);
@@ -406,20 +423,23 @@ class Post
 		}, $rows);
 	}
 
+	// get all reviewers assigned to this post
+	/** @return array<User> */
 	public function getAssignedReviewers(): array
 	{
 		$db = new Database();
 		$rows = $db->query("
-            SELECT u.*
-            FROM post_reviewer pr
-            JOIN users u ON pr.userId = u.id
-            WHERE pr.postId = :pid
-        ")->bind(':pid', $this->id)
-			->fetchAll();
+			SELECT u.*
+			FROM post_reviewer pr
+			JOIN users u ON pr.userId = u.id
+			WHERE pr.postId = :pid
+		")->bind(':pid', $this->id)->fetchAll();
 
 		return array_map(fn($r) => new User($r), $rows);
 	}
 
+	// get IDs of all reviewers assigned to this post
+	/** @return array<int> */
 	public function getAssignedReviewerIds(): array
 	{
 		return array_map(fn($u) => $u->id, $this->getAssignedReviewers());

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+// All post statuses
 enum Status: int
 {
 	case PendingReview = 10;
