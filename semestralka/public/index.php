@@ -4,7 +4,7 @@ use App\Core\App;
 use App\Core\Dispatcher;
 use App\Core\Router;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php'; // composer
 
 session_start();
 
@@ -17,8 +17,8 @@ error_reporting(E_ALL);
 $router = new Router();
 $dispatcher = new Dispatcher();
 
-$loadRoutes = require __DIR__ . '/../App/Routes.php';
-$loadRoutes($router);
+$loadRoutes = require __DIR__ . '/../App/Routes.php'; // function to add all routes
+$loadRoutes($router); // and here its added
 
 $app = new App($router, $dispatcher);
-$app->run();
+$app->run(); // based on URL, do the correct thing

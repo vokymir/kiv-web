@@ -1,7 +1,9 @@
 <?php
 
 use App\Config\Config;
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -30,6 +32,9 @@ use App\Config\Config;
 
 	<!-- Bootstrap JS -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+	<!-- Custom JS -->
+	<script src="<?= Config::BASE_URL ?>assets/script.js"></script>
 </body>
 
 </html>
