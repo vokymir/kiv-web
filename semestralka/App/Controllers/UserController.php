@@ -10,16 +10,19 @@ use App\Models\Role;
 
 class UserController extends Controller
 {
-	// show all users, if current user is Admin or Super
+	// Show all users (Admins and Superadmins only)
 	public function users(): void
 	{
 		Auth::requireRole([Role::Admin, Role::Superadmin]);
 
 		$users = User::all();
-		$this->renderView('admin/users', ['users' => $users]);
+		$this->renderView('admin/users', [
+			'title' => 'Manage Users',
+			'users' => $users
+		]);
 	}
 
-	// update one user from POST data, only for admins+
+	// Update a user (Admins+ only)
 	public function update(int $userId): void
 	{
 		Auth::requireRole([Role::Admin, Role::Superadmin]);
@@ -31,7 +34,7 @@ class UserController extends Controller
 			self::redirect('users');
 		}
 
-		// admins cannot edit admins or supers
+		// Admins cannot edit admins or supers
 		if ($current['role'] === Role::Admin->value && $target->role->value >= Role::Admin->value) {
 			Flash::set('warning', 'Cannot edit other admins.');
 			self::redirect('users');
@@ -46,7 +49,7 @@ class UserController extends Controller
 		self::redirect('users');
 	}
 
-	// delete target user, but only if current user is admin+
+	// Delete a user (Admins+ only)
 	public function delete(int $userId): void
 	{
 		Auth::requireRole([Role::Admin, Role::Superadmin]);

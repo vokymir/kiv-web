@@ -15,19 +15,21 @@ class ReviewController extends Controller
 	{
 		$userId = $_SESSION['user']['id'];
 		$posts = Post::findAssignedToReviewer($userId);
-		self::renderView('reviewer/posts', ['assignedPosts' => $posts]);
+		self::renderView('reviewer/posts', [
+			'title' => 'Assigned Posts',
+			'assignedPosts' => $posts
+		]);
 	}
 
 	// show form for NEW/EDIT review
 	public function create(int $postId): void
 	{
-		// for safety look if already exist
 		$post = Post::find($postId);
 		$review = Review::findByPostAndUser($postId, $_SESSION['user']['id']);
-
-		$isEdit = $review !== null; // if already exist, isEdit = true
+		$isEdit = $review !== null;
 
 		self::renderView('reviewer/form', [
+			'title' => $isEdit ? 'Edit Review' : 'New Review',
 			'post' => $post,
 			'review' => $review,
 			'isEdit' => $isEdit
@@ -59,25 +61,23 @@ class ReviewController extends Controller
 		$this->redirect('reviews');
 	}
 
-	// render form for edit review - shortcut compared to create, because we know it already exists
+	// render form for edit review
 	public function edit(int $reviewId): void
 	{
 		$review = Review::findById($reviewId);
 		$post = Post::find($review->postId);
 
-		$isEdit = true;
-
 		self::renderView('reviewer/form', [
+			'title' => 'Edit Review',
 			'post' => $post,
 			'review' => $review,
-			'isEdit' => $isEdit
+			'isEdit' => true
 		]);
 	}
 
 	// prevent SQL inject
 	function sanitizeReviewNote(string $html): string
 	{
-		// allow only some tags
 		$allowedTags = '<p><br><b><i><strong><em><ul><ol><li>';
 		return strip_tags($html, $allowedTags);
 	}
@@ -93,7 +93,6 @@ class ReviewController extends Controller
 
 		$user = $_SESSION['user'];
 
-		// allow only reviewers
 		if ((int)$user['role'] !== Role::Reviewer->value) {
 			Flash::set('error', "Forbidden: only reviewers can submit reviews.");
 			http_response_code(403);
@@ -113,7 +112,6 @@ class ReviewController extends Controller
 			'ratingNote' => self::sanitizeReviewNote($_POST['ratingNote'] ?? '')
 		];
 
-		// already exists
 		$existingReview = Review::findByPostAndUser($postId, $userId);
 
 		if ($existingReview) {

@@ -20,7 +20,7 @@ class AuthController extends Controller
 			self::redirect('');
 		} else {
 			Flash::set('error', 'Invalid credentials...');
-			self::renderView('public/login');
+			self::renderView('public/login', ['title' => 'Login']);
 		}
 	}
 
@@ -42,19 +42,19 @@ class AuthController extends Controller
 
 		if ($username === '' || $password === '' || $confirmPassword === '' || $name === '') {
 			Flash::set('error', 'Please fill all fields.');
-			self::renderView('public/register');
+			self::renderView('public/register', ['title' => 'Register']);
 			return;
 		}
 
 		if ($password !== $confirmPassword) {
 			Flash::set('error', 'Passwords must match.');
-			self::renderView('public/register');
+			self::renderView('public/register', ['title' => 'Register']);
 			return;
 		}
 
 		if (!Auth::registerUser($username, $password, $name, Role::Author->value)) {
 			Flash::set('error', 'Username already exists.');
-			self::renderView('public/register');
+			self::renderView('public/register', ['title' => 'Register']);
 			return;
 		}
 
@@ -64,12 +64,12 @@ class AuthController extends Controller
 	// show login page
 	public function showLogin(): void
 	{
-		self::renderView("public/login");
+		self::renderView('public/login', ['title' => 'Login']);
 	}
 
 	// show register page
 	public function showRegister(): void
 	{
-		self::renderView('public/register');
+		self::renderView('public/register', ['title' => 'Register']);
 	}
 }

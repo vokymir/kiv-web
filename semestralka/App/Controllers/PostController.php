@@ -28,7 +28,10 @@ class PostController extends Controller
 
 		if ($userRole == Role::Author) {
 			$posts = Post::findByUser($userId);
-			self::renderView('author/posts', ['posts' => $posts]);
+			self::renderView('author/posts', [
+				'title' => 'My Posts',
+				'posts' => $posts
+			]);
 			return;
 		} else if ($userRole == Role::Admin || $userRole == Role::Superadmin) {
 			$this->admin_posts();
@@ -38,7 +41,7 @@ class PostController extends Controller
 	// show page for new post
 	public function new(): void
 	{
-		self::renderView('author/new');
+		self::renderView('author/new', ['title' => 'New Post']);
 	}
 
 	// show page for edit post if that post exists
@@ -51,7 +54,10 @@ class PostController extends Controller
 			return;
 		}
 
-		self::renderView('author/edit', ['post' => $post]);
+		self::renderView('author/edit', [
+			'title' => 'Edit Post',
+			'post' => $post
+		]);
 	}
 
 	// try storing new post in the database
@@ -76,8 +82,8 @@ class PostController extends Controller
 			Flash::set('success', 'Post created!');
 			self::redirect('posts');
 		} catch (\Throwable $e) {
-			Flash::set('error', "Error while creating new post: $e->getMessage()");
-			self::renderView('author/new');
+			Flash::set('error', "Error while creating new post: {$e->getMessage()}");
+			self::renderView('author/new', ['title' => 'New Post']);
 		}
 	}
 
@@ -103,7 +109,7 @@ class PostController extends Controller
 			self::redirect('posts');
 		} catch (\Throwable $e) {
 			Flash::set('error', "Error while creating new post:" . htmlspecialchars($e->getMessage()));
-			self::renderView('author/edit');
+			self::renderView('author/edit', ['title' => 'Edit Post']);
 		}
 	}
 
@@ -113,7 +119,7 @@ class PostController extends Controller
 		try {
 			$post = new Post();
 			$post->delete($postId);
-			Flash::set('success', 'Post created!');
+			Flash::set('success', 'Post deleted!');
 		} catch (\Throwable $e) {
 			Flash::set('error', "Failed to delete post: " . htmlspecialchars($e->getMessage()));
 			http_response_code(500);
@@ -132,14 +138,14 @@ class PostController extends Controller
 	{
 		Auth::requireRole([Role::Admin, Role::Superadmin]);
 
-		// onpage filtering
 		$statusFilter = $_GET['status'] ?? 'all';
 		$status = Status::fromFilter($statusFilter);
 
 		$posts = Post::all($status ? [$status] : null);
-		$reviewers = User::allByRole(Role::Reviewer); // all that can be assigned to review
+		$reviewers = User::allByRole(Role::Reviewer);
 
 		self::renderView('admin/posts', [
+			'title' => 'All Posts',
 			'posts' => $posts,
 			'reviewers' => $reviewers,
 			'statusFilter' => $statusFilter,
@@ -157,7 +163,6 @@ class PostController extends Controller
 			self::redirect('posts');
 		}
 
-		// more possible action from the view
 		$action = $_POST['action'] ?? null;
 		switch ($action) {
 			case 'assign':
@@ -172,15 +177,12 @@ class PostController extends Controller
 
 			case 'publish':
 			case 'reject':
-				// Get count of reviews for this post
 				$reviewCount = count($post->getReviews() ?? []);
-
 				if ($reviewCount < 3) {
 					Flash::set('error', "Cannot $action post — at least 3 reviews are required.");
 					self::redirect('posts');
 					return;
 				}
-
 				$newStatus = $action === 'publish' ? Status::Accepted : Status::Rejected;
 				$post->updateStatus($newStatus);
 				break;
@@ -197,13 +199,12 @@ class PostController extends Controller
 
 		$post = Post::find($postId);
 		if (!$post) {
-			Flash::set('warning', "Post cannot be updated because it doesn't exist.");
+			Flash::set('warning', "Post cannot be deleted because it doesn't exist.");
 			self::redirect('posts');
 		}
 
 		$post->delete($postId);
-
-		Flash::set('success', 'Post successfully updated!');
+		Flash::set('success', 'Post successfully deleted!');
 		self::redirect('posts');
 	}
 }
