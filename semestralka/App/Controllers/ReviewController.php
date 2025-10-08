@@ -64,7 +64,7 @@ class ReviewController extends Controller
 		$user = $_SESSION['user'];
 
 		// allow only reviewers
-		if ((int)$user['role'] !== Role::Reviewer) {
+		if ((int)$user['role'] !== Role::Reviewer->value) {
 			http_response_code(403);
 			echo "Forbidden: only reviewers can submit reviews.";
 			exit;

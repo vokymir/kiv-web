@@ -112,7 +112,7 @@ class Post
 	{
 		$db = new Database();
 		$row = $db->query("
-			SELECT p.*, u.username AS author
+			SELECT p.*, u.name AS author
 			FROM posts p
 			JOIN users u ON u.id = p.userId
 			WHERE p.id = :id
@@ -128,7 +128,7 @@ class Post
 	{
 		$db = new Database();
 		$rows = $db->query("
-			SELECT p.*, u.username AS author
+			SELECT p.*, u.name AS author
 			FROM posts p
 			LEFT JOIN users u ON p.userId = u.id
 			WHERE p.userId = :uid
@@ -145,7 +145,7 @@ class Post
 		$db = new Database();
 		$rows = $db->query("
 			SELECT 
-				p.*, u.username AS authorName,
+				p.*, u.name AS author,
 				r.id AS reviewId,
 				r.ratingInteresting, r.ratingImportant, r.ratingInovative, r.ratingNote
 			FROM post_reviewer pr
@@ -172,7 +172,7 @@ class Post
 					'ratingNote' => $row['ratingNote']
 				]);
 			}
-			$post->author = $row['authorName'] ?? null;
+			$post->author = $row['author'] ?? null;
 			return $post;
 		}, $rows);
 	}
@@ -276,5 +276,36 @@ class Post
 		}
 
 		return (int)round($sum / count($rows));
+	}
+
+	public function getReviews(): array
+	{
+		$db = new Database();
+		$rows = $db->query("
+		SELECT 
+			r.ratingInteresting,
+			r.ratingImportant,
+			r.ratingInovative,
+			r.ratingNote,
+			u.name AS reviewerName
+		FROM reviews r
+		JOIN users u ON r.userId = u.id
+		WHERE r.postId = :pid
+		ORDER BY u.name
+	")
+			->bind(':pid', $this->id)
+			->fetchAll();
+
+		return array_map(function ($r) {
+			$avg = round(($r['ratingInteresting'] + $r['ratingImportant'] + $r['ratingInovative']) / 3);
+			return [
+				'reviewerName' => $r['reviewerName'],
+				'avgStars' => str_repeat('⭐', $avg) . str_repeat('☆', 5 - $avg),
+				'ratingInteresting' => $r['ratingInteresting'],
+				'ratingImportant' => $r['ratingImportant'],
+				'ratingInovative' => $r['ratingInovative'],
+				'note' => $r['ratingNote'],
+			];
+		}, $rows);
 	}
 }

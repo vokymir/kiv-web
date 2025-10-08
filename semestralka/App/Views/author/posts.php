@@ -28,6 +28,38 @@ use App\Config\Config;
 					data-bs-parent="#userPostsAccordion">
 					<div class="accordion-body">
 						<p><?= nl2br(htmlspecialchars($post->abstract)) ?></p>
+
+						<?php
+						$reviews = $post->getReviews();
+						if ($reviews): ?>
+							<hr>
+							<h5>Reviews</h5>
+							<?php foreach ($reviews as $rev): ?>
+								<div class="mb-3">
+									<strong><?= htmlspecialchars($rev['reviewerName']) ?>:</strong>
+									<div class="ms-2">
+										<div>Interesting:
+											<span><?= str_repeat('⭐', $rev['ratingInteresting']) . str_repeat('☆', 5 - $rev['ratingInteresting']) ?></span>
+										</div>
+										<div>Important:
+											<span><?= str_repeat('⭐', $rev['ratingImportant']) . str_repeat('☆', 5 - $rev['ratingImportant']) ?></span>
+										</div>
+										<div>Innovative:
+											<span><?= str_repeat('⭐', $rev['ratingInovative']) . str_repeat('☆', 5 - $rev['ratingInovative']) ?></span>
+										</div>
+									</div>
+
+									<?php if (!empty(trim($rev['note']))): ?>
+										<div class="border rounded p-2 mt-2 bg-light">
+											<?= $rev['note'] ?>
+										</div>
+									<?php endif; ?>
+								</div>
+							<?php endforeach; ?>
+						<?php else: ?>
+							<p class="text-muted">No reviews yet.</p>
+						<?php endif; ?>
+
 						<?php if (!empty($post->pathPDF)): ?>
 							<a href="<?= Config::BASE_URL ?>download/pdf/<?= $post->pathPDF ?>" target="_blank" class="btn btn-primary">Download PDF</a>
 						<?php endif; ?>

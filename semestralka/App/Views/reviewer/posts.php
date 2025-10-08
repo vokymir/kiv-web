@@ -18,7 +18,7 @@ use App\Config\Config;
 						aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>"
 						aria-controls="collapse<?= $post->id ?>">
 						<?= htmlspecialchars($post->title) ?>
-						<span class="text-muted ms-2">(Author: <?= htmlspecialchars($post->authorName ?? 'Unknown') ?>)</span>
+						<span class="text-muted ms-2">(Author: <?= htmlspecialchars($post->author ?? 'Unknown') ?>)</span>
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>"
