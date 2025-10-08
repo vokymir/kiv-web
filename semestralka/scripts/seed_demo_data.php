@@ -87,7 +87,7 @@ SVG;
 	$mpdf->Output($fullPath, \Mpdf\Output\Destination::FILE);
 
 	// return path relative to webroot/public
-	return 'uploads/pdfs/' . $filename;
+	return 'pdfs/' . $filename;
 }
 
 try {
