@@ -20,9 +20,11 @@ class App
 		$routeInfo = $this->router->match($urlParts);
 
 		if (!$routeInfo) {
-			http_response_code(404);
-			echo "404 - Route not found";
-			return;
+			$routeInfo = [
+				'controller' => 'PublicController',
+				'method' => 'error',
+				'params' => []
+			];
 		}
 
 		$this->dispatcher->dispatch(

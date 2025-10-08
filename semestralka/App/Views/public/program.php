@@ -1,7 +1,6 @@
 <?php
 
 use App\Config\Config;
-use App\Models\Post;
 
 ?>
 

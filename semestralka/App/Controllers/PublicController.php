@@ -32,4 +32,10 @@ class PublicController extends Core\Controller
 
 		$this::renderView('public/program', $data);
 	}
+
+	public function error(): void
+	{
+		http_response_code(404);
+		$this::renderView('public/404');
+	}
 }

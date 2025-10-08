@@ -7,6 +7,7 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Models\Role;
 use App\Config\Config;
+use App\Core\Flash;
 
 class AuthController extends Controller
 {
@@ -16,15 +17,18 @@ class AuthController extends Controller
 		$password = $_POST['password'] ?? '';
 
 		if (Auth::attemptLogin($username, $password)) {
+			Flash::set('success', "Welcome back $username");
 			self::redirect('');
 		} else {
-			self::renderView('public/login', ['error' => 'Invalid credentials...']);
+			Flash::set('error', 'Invalid credentials...');
+			self::renderView('public/login');
 		}
 	}
 
 	public function logout(): void
 	{
 		Auth::logout();
+		Flash::set('success', "See you!");
 		self::redirect('login');
 	}
 
@@ -36,17 +40,20 @@ class AuthController extends Controller
 		$name = trim($_POST['name'] ?? '');
 
 		if ($username === '' || $password === '' || $confirmPassword === '' || $name === '') {
-			self::renderView('public/register', ['error' => 'Please fill all fields.']);
+			Flash::set('error', 'Please fill all fields.');
+			self::renderView('public/register');
 			return;
 		}
 
 		if ($password !== $confirmPassword) {
-			self::renderView('public/register', ['error' => 'Passwords must match.']);
+			Flash::set('error', 'Passwords must match.');
+			self::renderView('public/register');
 			return;
 		}
 
 		if (!Auth::registerUser($username, $password, $name, Role::Author->value)) {
-			self::renderView('public/register', ['error' => 'Username already exists.']);
+			Flash::set('error', 'Username already exists.');
+			self::renderView('public/register');
 			return;
 		}
 

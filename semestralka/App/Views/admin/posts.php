@@ -15,6 +15,24 @@ use App\Models\User;
 	</div>
 </div>
 
+<?php if (!empty($_SESSION['error'])): ?>
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		<strong>Error:</strong> <?= htmlspecialchars($_SESSION['error']) ?>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	<script>
+		// Auto-hide after 5 seconds
+		setTimeout(() => {
+			const alert = document.querySelector('.alert');
+			if (alert) {
+				const bsAlert = new bootstrap.Alert(alert);
+				bsAlert.close();
+			}
+		}, 5000);
+	</script>
+	<?php unset($_SESSION['error']); ?>
+<?php endif; ?>
+
 <?php if ($posts): ?>
 	<div class="accordion" id="postsAccordion">
 		<?php foreach ($posts as $index => $post): ?>

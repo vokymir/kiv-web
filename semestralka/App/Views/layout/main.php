@@ -20,6 +20,8 @@ use App\Config\Config;
 <body>
 	<?php $this->renderPartial("nav") ?>
 
+	<?php $this->renderPartial("flash") ?>
+
 	<main class="container my-4">
 		<?= $content ?>
 	</main>
