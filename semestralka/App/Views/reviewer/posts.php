@@ -24,6 +24,23 @@ use App\Config\Config;
 						<?php else: ?>
 							<span class="badge bg-secondary ms-2">Not Reviewed</span>
 						<?php endif; ?>
+
+						<div class="ms-2 d-flex align-items-center me-2">
+
+							<?php
+							$rating = $post->rating() ?? 1;
+							$fullStars = $rating;
+							$emptyStars = 5 - $fullStars;
+							?>
+							<span class="ms-auto d-flex align-items-center">
+								<?php for ($i = 0; $i < $fullStars; $i++): ?>
+									<span class="text-warning">⭐</span>
+								<?php endfor; ?>
+								<?php for ($i = 0; $i < $emptyStars; $i++): ?>
+									<span class="text-secondary">☆</span>
+								<?php endfor; ?>
+							</span>
+						</div>
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>"

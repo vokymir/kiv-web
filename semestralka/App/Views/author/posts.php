@@ -13,13 +13,30 @@ use App\Config\Config;
 		<?php foreach ($posts as $index => $post): ?>
 			<div class="accordion-item">
 				<h2 class="accordion-header" id="heading<?= $post->id ?>">
-					<button class="accordion-button collapsed"
+					<button class="accordion-button collapsed d-flex justify-content-between align-items-center"
 						type="button" data-bs-toggle="collapse"
 						data-bs-target="#collapse<?= $post->id ?>"
 						aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>"
 						aria-controls="collapse<?= $post->id ?>">
-						<?= htmlspecialchars($post->title) ?>
-						<span class="text-muted ms-2">(Status: <?= $post->getStatusName() ?>)</span>
+
+						<div class="me-2 text-truncate">
+							<?= htmlspecialchars($post->title) ?>
+							<span class="text-muted ms-2">(Status: <?= $post->getStatusName() ?>)</span>
+						</div>
+
+						<?php
+						$rating = $post->rating() ?? 1;
+						$fullStars = $rating;
+						$emptyStars = 5 - $fullStars;
+						?>
+						<span class="d-flex align-items-center flex-shrink-0">
+							<?php for ($i = 0; $i < $fullStars; $i++): ?>
+								<span class="text-warning">⭐</span>
+							<?php endfor; ?>
+							<?php for ($i = 0; $i < $emptyStars; $i++): ?>
+								<span class="text-secondary">☆</span>
+							<?php endfor; ?>
+						</span>
 					</button>
 				</h2>
 				<div id="collapse<?= $post->id ?>"

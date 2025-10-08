@@ -34,6 +34,23 @@ use App\Models\User;
 									} ?>">
 							<?= $post->getStatusName() ?>
 						</span>
+
+						<div class="w-100 d-flex align-items-center me-2">
+
+							<?php
+							$rating = $post->rating() ?? 1;
+							$fullStars = $rating;
+							$emptyStars = 5 - $fullStars;
+							?>
+							<span class="ms-auto d-flex align-items-center">
+								<?php for ($i = 0; $i < $fullStars; $i++): ?>
+									<span class="text-warning">⭐</span>
+								<?php endfor; ?>
+								<?php for ($i = 0; $i < $emptyStars; $i++): ?>
+									<span class="text-secondary">☆</span>
+								<?php endfor; ?>
+							</span>
+						</div>
 					</button>
 				</h2>
 
