@@ -31,6 +31,28 @@ class ReviewController extends Controller
 		]);
 	}
 
+	public function delete(int $id): void
+	{
+		$review = Review::findById($id);
+		if (!$review) {
+			$this->redirect('/reviews');
+			return;
+		}
+
+		if ($review->userId !== $_SESSION['user']['id']) {
+			http_response_code(403);
+			echo "Forbidden: you cannot delete someone else's review.";
+			return;
+		}
+
+		if (Review::deleteById($id)) {
+			$this->redirect('reviews');
+		} else {
+			echo "Error deleting review.";
+		}
+	}
+
+
 	public function edit(int $reviewId): void
 	{
 		$review = Review::findById($reviewId);

@@ -113,6 +113,12 @@ use App\Config\Config;
 								class="btn btn-warning">
 								Edit Review
 							</a>
+
+							<a href="<?= Config::BASE_URL ?>reviews/<?= $post->review->id ?>/delete"
+								class="btn btn-danger"
+								onclick="return confirm('Are you sure you want to delete this review?')">
+								Delete Review
+							</a>
 						<?php else: ?>
 							<p class="text-muted mb-3">You haven’t reviewed this post yet.</p>
 							<a href="<?= Config::BASE_URL ?>reviews/<?= $post->id ?>/create"

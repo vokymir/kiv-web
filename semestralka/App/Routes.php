@@ -22,6 +22,7 @@ return function (Router $router) {
 	$router->get('reviews/{reviewId}/edit', 'ReviewController@edit');
 	$router->post('reviews/store', 'ReviewController@store');
 	$router->post('reviews/update', 'ReviewController@store');
+	$router->get('reviews/{id}/delete', 'ReviewController@delete');
 	$router->get('users', 'UserController@users');
 	$router->post('users/{userId}/update', 'UserController@update');
 	$router->get('users/{userId}/delete', 'UserController@delete');

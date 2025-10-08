@@ -69,6 +69,14 @@ class Review
 			->execute();
 	}
 
+	public static function deleteById(int $id): bool
+	{
+		$db = new Database();
+		return $db->query("DELETE FROM reviews WHERE id = :id")
+			->bind(':id', $id)
+			->execute();
+	}
+
 	// ===== FINDs =====
 
 	public static function findById(int $reviewId): ?Review
