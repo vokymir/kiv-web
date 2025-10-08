@@ -12,6 +12,7 @@ class User
 	public bool $blocked;
 
 	public string $username;
+	public string $name;
 	public string $passwordHash;
 
 	// ===== CRUD =====
