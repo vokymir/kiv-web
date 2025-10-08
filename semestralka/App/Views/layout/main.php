@@ -14,7 +14,7 @@ use App\Config\Config;
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="<?= Config::BASE_URL ?>css/style.css">
+	<link rel="stylesheet" href="<?= Config::BASE_URL ?>assets/style.css">
 </head>
 
 <body>

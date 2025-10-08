@@ -2,7 +2,6 @@
 
 use App\Config\Config;
 use App\Models\Status;
-use App\Models\User;
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">

@@ -2,7 +2,6 @@
 
 use App\Config\Config;
 use App\Models\Role;
-use App\Models\User;
 
 ?>
 
