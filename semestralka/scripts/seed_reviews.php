@@ -55,14 +55,25 @@ try {
 
 	// notes and rating pool
 	$notes = [
-		"Thoroughly convincing — would attend the talk.",
-		"Interesting approach but lacks calibrated measurements.",
-		"Good attempt, consider tighter error analysis.",
-		"Entertaining and creative, presentation recommended.",
-		"Findings are questionable — suggest revisions.",
-		"Solid demonstration, minor corrections suggested.",
-		"Novel perspective, needs clearer diagrams.",
-		"Fun and persuasive; bring props to the talk."
+		"Thoroughly convincing — would attend the talk and bring a notepad. The presenter builds a charming narrative, peppers the talk with cheeky demonstrations and even the skeptical aunt might giggle. Recommend reserving extra Q&A time for conspiratorial footnotes and audience confessions.",
+
+		"Interesting approach but lacks calibrated measurements. Nice intuition and backyard bravado, however please add reproducible steps: tape measures, level apps, timestamped photos and a notes log. A short troubleshooting section (wind, reflections, syrup on pancake) would make this much stronger.",
+
+		"Good attempt, consider tighter error analysis. The pancakes-to-horizon comparison is delightful but needs standard deviations, repeated trials and a clear method for controlling confounders (birds, drones, tourists). Still very readable and charming — just tighten the numbers.",
+
+		"Entertaining and creative; presentation recommended. Audience engagement is guaranteed — particularly the live demo bit. Suggest adding an inflatable globe for dramatic contrast, a one-slide myth-busting cheat sheet, and a wink at mainstream science to keep things playful.",
+
+		"Findings are questionable — suggest revisions before cosmic peer review. The logic trail includes a few interpretive leaps (and one literal hop); expand the methods, include raw data and pre-register the next backyard experiment. With those fixes this could be a crowd favorite.",
+
+		"Solid demonstration, minor corrections suggested. Diagrams are fun but labels are ambiguous; move the moonbeam anecdote to an appendix and include a clear, repeatable protocol for backyard replication. Add a short checklist so volunteers can reproduce results reliably.",
+
+		"Novel perspective, needs clearer diagrams and a glossary. 'Edge effects' is delightfully named but underdefined — include step-by-step photos, a list of required household props and brief captions for each figure. The idea is fresh and theatrical; clarity will make it credible (in the playful sense).",
+
+		"Fun and persuasive — bring props to the talk. A laser pointer, a frying pan and one polite moderator will elevate the demo to theatre. Recommend a live demo slot, printed takeaway with ‘how-to’ home experiments, and a signed napkin giveaway for maximum charm.",
+
+		"Clever mashup of satire and fieldwork — the writing sparkles and the diagrams are delightfully theatrical. Tighten up the slide deck to 8 slides, add a one-page handout with stepwise experiments for kids, and consider a short FAQ addressing obvious sceptic questions (answered with humour).",
+
+		"Well-written and amusing; the methodology could use one more control test (cat on the table optional). Strong party-talk potential — propose a short follow-up study with clearer controls and reproducible notes so the next generation of horizon-measurers can build on this work."
 	];
 
 	// fetch posts (optionally single)
