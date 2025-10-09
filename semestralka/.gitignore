@@ -1,2 +1,4 @@
 uploads/
 vendor/
+.credentials
+.credentials.json
