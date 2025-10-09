@@ -65,9 +65,11 @@ log "Seeding users..."
 $PHP_BIN "$ROOT/seed_users.php"
 
 log "Seeding posts..."
-$PHP_BIN "$ROOT/seed_posts.php"
+$PHP_BIN "$ROOT/seed_posts.php" --pdf
 
 log "Seeding reviews..."
 $PHP_BIN "$ROOT/seed_reviews.php"
+
+mkdir -p ../public/uploads && chmod 0777 ../public/uploads
 
 echo "✅ Setup complete!"

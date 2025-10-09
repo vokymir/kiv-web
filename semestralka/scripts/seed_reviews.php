@@ -1,10 +1,10 @@
 <?php
-// scripts/seed_assign_reviews.php
+// scripts/seed_reviews.php
 // Usage:
-//   php scripts/seed_assign_reviews.php              # process all posts
-//   php scripts/seed_assign_reviews.php -v           # verbose
-//   php scripts/seed_assign_reviews.php --dry-run    # simulate only
-//   php scripts/seed_assign_reviews.php --post=123   # only for post id 123
+//   php scripts/seed_reviews.php              # process all posts
+//   php scripts/seed_reviews.php -v           # verbose
+//   php scripts/seed_reviews.php --dry-run    # simulate only
+//   php scripts/seed_reviews.php --post=123   # only for post id 123
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Database;
@@ -12,7 +12,7 @@ use App\Models\Role;
 use App\Models\Status;
 
 if (php_sapi_name() !== 'cli') {
-	echo "Run from CLI: php scripts/seed_assign_reviews.php\n";
+	echo "Run from CLI: php scripts/seed_reviews.php\n";
 	exit(1);
 }
 

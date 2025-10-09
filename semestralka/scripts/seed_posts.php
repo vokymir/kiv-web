@@ -1,9 +1,9 @@
 <?php
-// scripts/seed_posts_by_authors.php
+// scripts/seed_posts.php
 // Usage:
-//   php scripts/seed_posts_by_authors.php        # create posts (1..5) per author
-//   php scripts/seed_posts_by_authors.php -v     # verbose
-//   php scripts/seed_posts_by_authors.php --pdf  # also attempt to create PDFs (requires mpdf/mpdf)
+//   php scripts/seed_posts.php        # create posts (1..5) per author
+//   php scripts/seed_posts.php -v     # verbose
+//   php scripts/seed_posts.php --pdf  # also attempt to create PDFs (requires mpdf/mpdf)
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -13,7 +13,7 @@ use App\Models\Status;
 use Mpdf\Mpdf;
 
 if (php_sapi_name() !== 'cli') {
-	echo "Run from CLI: php scripts/seed_posts_by_authors.php\n";
+	echo "Run from CLI: php scripts/seed_posts.php\n";
 	exit(1);
 }
 

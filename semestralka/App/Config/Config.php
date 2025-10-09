@@ -10,7 +10,7 @@ class Config
 	public const DB_NAME = 'conference_db';
 	public const DB_PORT = '3306';
 	public const BASE_URL = 'http://localhost/kiv-web/semestralka/public/';
-	public const UPLOAD_DIR =  __DIR__ . '/../../uploads/';
+	public const UPLOAD_DIR =  __DIR__ . '/../../public/uploads/';
 
 	public const VIEW_DATA = [
 		"sitename" => "The Flat Earth Society Conference",
