@@ -117,7 +117,7 @@ class PostController extends Controller
 	public function delete(int $postId): void
 	{
 		try {
-			$post = new Post();
+			$post = Post::find($postId);
 			$post->delete($postId);
 			Flash::set('success', 'Post deleted!');
 		} catch (\Throwable $e) {

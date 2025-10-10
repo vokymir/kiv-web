@@ -80,4 +80,31 @@ CREATE TABLE IF NOT EXISTS post_reviewer (
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );")->execute();
 
-echo "Tables created with cascading deletes.\n";
+echo "Tables created.\n";
+
+// ===== DEFAULT USERS =====
+
+function h($p)
+{
+	return password_hash($p, PASSWORD_BCRYPT);
+}
+
+$users = [
+	['super', 'superpass', 'Super Admin', 50],
+	['admin', 'adminpass', 'Admin', 30],
+	['author', 'authorpass', 'První autor', 10],
+	['reviewer', 'reviewerpass', 'Klidný hodnotitel', 20]
+];
+
+foreach ($users as $u) {
+	$db->query('INSERT IGNORE INTO users (username, passwordHash, name, role)
+				VALUES (:username, :passwordHash, :name, :role)')
+		->bind(':username', $u[0])
+		->bind(':passwordHash', h($u[1]))
+		->bind(':name', $u[2])
+		->bind(':role', $u[3])
+		->execute();
+}
+
+echo "Default users inserted.\n";
+echo "Done.\n";
