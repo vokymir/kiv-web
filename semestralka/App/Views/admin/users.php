@@ -25,8 +25,12 @@ use App\Models\Role;
 					<td><?= htmlspecialchars($user->name) ?></td>
 					<td>
 						<select name="role" class="form-select form-select-sm"
-							<?= ($user->role->value >= Role::Admin->value && $_SESSION['user']['role'] < Role::Superadmin->value) ? 'disabled' : '' ?>>
+							<?= (
+								$user->role->value >= Role::Admin->value
+								&& $_SESSION['user']['role'] < Role::Superadmin->value
+							) ? 'disabled' : '' ?>>
 							<?php foreach (Role::cases() as $role): ?>
+								<?php if ($role === Role::Superadmin && $_SESSION['user']['role'] !== Role::Superadmin->value) continue; ?>
 								<option value="<?= $role->value ?>" <?= $role === $user->role ? 'selected' : '' ?>>
 									<?= $role->label() ?>
 								</option>

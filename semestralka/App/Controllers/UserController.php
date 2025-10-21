@@ -28,6 +28,7 @@ class UserController extends Controller
 		Auth::requireRole([Role::Admin, Role::Superadmin]);
 		$current = $_SESSION['user'];
 		$target = User::find($userId);
+		$newRole = (int)$_POST['role'];
 
 		if (!$target) {
 			Flash::set('error', 'Cannot edit non-existing user.');
@@ -40,13 +41,30 @@ class UserController extends Controller
 			self::redirect('users');
 		}
 
+		// Only Superadmin can create another Superadmin
+		if ($newRole > Role::Admin->value && $current['role'] != Role::Superadmin->value) {
+			$newRole = Role::Admin->value;
+		}
+
 		$target->update([
-			'role' => (int)$_POST['role'],
+			'role' => $newRole,
 			'blocked' => isset($_POST['blocked']) ? 1 : 0
 		]);
 
+		// if editing self
+		if ($target->id == $current['id']) {
+			$_SESSION['user']['role'] = $target->role;
+			$_SESSION['user']['blocked'] = $target->blocked;
+		}
+
 		Flash::set('success', 'User successfully edited!');
-		self::redirect('users');
+
+		// if edited self
+		if ($_SESSION['user']['role'] >= Role::Admin->value) {
+			self::redirect('users');
+		} else {
+			self::redirect('/');
+		}
 	}
 
 	// Delete a user (Admins+ only)
